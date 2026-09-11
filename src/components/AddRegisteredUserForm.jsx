@@ -23,10 +23,10 @@ function AddRegisteredUserForm({ group }) {
       });
 
       setEmail('');
-      setMessage(`${member.displayName || member.email} fue agregado al grupo.`);
+      setMessage(`${member.displayName || member.email} fue agregado al viaje.`);
     } catch (err) {
       console.error(err);
-      setError(err.message || 'No se pudo agregar el usuario.');
+      setError(err.message || 'No se pudo agregar el participante.');
     } finally {
       setIsSubmitting(false);
     }
@@ -35,7 +35,7 @@ function AddRegisteredUserForm({ group }) {
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
       <label className={styles.field}>
-        <span>Agregar usuario registrado por email</span>
+        <span>Agregar participante registrado por email</span>
         <input
           type="email"
           placeholder="usuario@email.com"
@@ -50,7 +50,7 @@ function AddRegisteredUserForm({ group }) {
 
       <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
         <FiUserPlus aria-hidden="true" />
-        {isSubmitting ? 'Agregando...' : 'Agregar usuario'}
+        {isSubmitting ? 'Agregando...' : 'Agregar participante'}
       </button>
     </form>
   );

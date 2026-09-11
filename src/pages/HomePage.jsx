@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FiPlusCircle, FiUsers } from 'react-icons/fi';
+import { FiMap, FiPlusCircle } from 'react-icons/fi';
 import GroupCard from '@/components/GroupCard';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserGroups } from '@/hooks/useUserGroups';
@@ -19,14 +19,14 @@ function HomePage() {
           <p className={styles.eyebrow}>Inicio</p>
           <h1>Hola, {displayName}</h1>
           <p>
-            Acá aparecen tus grupos compartidos, los gastos cargados y el resumen de quién le
-            debe a quién.
+            Acá aparecen tus viajes compartidos. Cada viaje va a reunir gastos, participantes y
+            los próximos módulos de organización.
           </p>
         </div>
 
-        <Link to="/grupos/nuevo" className={styles.primaryAction}>
+        <Link to="/viajes/nuevo" className={styles.primaryAction}>
           <FiPlusCircle aria-hidden="true" />
-          Crear grupo
+          Crear viaje
         </Link>
       </div>
 
@@ -34,15 +34,15 @@ function HomePage() {
 
       {groupsLoading ? (
         <article className={styles.emptyState}>
-          <h2>Cargando grupos...</h2>
+          <h2>Cargando viajes...</h2>
         </article>
       ) : null}
 
       {!groupsLoading && !hasGroups ? (
         <article className={styles.emptyState}>
-          <FiUsers aria-hidden="true" />
-          <h2>Todavía no hay grupos</h2>
-          <p>Creá tu primer grupo para empezar a cargar gastos compartidos.</p>
+          <FiMap aria-hidden="true" />
+          <h2>Todavía no hay viajes</h2>
+          <p>Creá tu primer viaje para empezar a organizarlo con el grupo.</p>
         </article>
       ) : null}
 

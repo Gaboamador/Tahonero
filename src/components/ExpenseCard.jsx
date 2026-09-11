@@ -77,7 +77,7 @@ function ExpenseCard({ expense, groupId, membersMap }) {
       <div className={styles.actions}>
         {!isPayment ? (
           <Link
-            to={`/grupos/${groupId}/gastos/${expense.id}/editar`}
+            to={`/viajes/${groupId}/gastos/${expense.id}/editar`}
             className={styles.actionButton}
             aria-label={`Editar gasto ${expense.description}`}
           >

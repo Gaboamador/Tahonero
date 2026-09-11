@@ -57,7 +57,7 @@ function CreatePaymentPage() {
         createdBy: currentUser.uid,
       });
 
-      navigate(`/grupos/${groupId}`);
+      navigate(`/viajes/${groupId}/gastos`);
     } catch (err) {
       console.error(err);
       setError(err.message || 'No se pudo registrar el pago.');
@@ -70,7 +70,7 @@ function CreatePaymentPage() {
     return (
       <section className={styles.page}>
         <article className={styles.statusCard}>
-          <h1>Cargando grupo...</h1>
+          <h1>Cargando viaje...</h1>
         </article>
       </section>
     );
@@ -86,7 +86,7 @@ function CreatePaymentPage() {
 
         <article className={styles.statusCard}>
           <h1>No se puede registrar el pago</h1>
-          <p>{groupError || 'El grupo no existe o no tenés permisos para verlo.'}</p>
+          <p>{groupError || 'El viaje no existe o no tenés permisos para verlo.'}</p>
         </article>
       </section>
     );
@@ -94,9 +94,9 @@ function CreatePaymentPage() {
 
   return (
     <section className={styles.page}>
-      <button type="button" className={styles.backButton} onClick={() => navigate(`/grupos/${groupId}`)}>
+      <button type="button" className={styles.backButton} onClick={() => navigate(`/viajes/${groupId}/gastos`)}>
         <FiArrowLeft aria-hidden="true" />
-        Volver al grupo
+        Volver a gastos
       </button>
 
       <form className={styles.card} onSubmit={handleSubmit}>

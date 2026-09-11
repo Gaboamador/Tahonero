@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { FiArrowRight, FiUsers } from 'react-icons/fi';
+import { FiArrowRight, FiCalendar, FiUsers } from 'react-icons/fi';
+import { formatTripDateRange } from '@/utils/tripUtils';
 import styles from './GroupCard.module.scss';
 
 function GroupCard({ group }) {
@@ -14,14 +15,20 @@ function GroupCard({ group }) {
       <div className={styles.content}>
         <h2>{group.name}</h2>
 
-        {group.description ? <p>{group.description}</p> : <p>Grupo compartido de gastos.</p>}
+        {group.description ? <p>{group.description}</p> : <p>Viaje compartido.</p>}
 
-        <span className={styles.meta}>
-          {membersCount === 1 ? '1 miembro' : `${membersCount} miembros`}
-        </span>
+        <div className={styles.metaRow}>
+          <span className={styles.meta}>
+            {membersCount === 1 ? '1 participante' : `${membersCount} participantes`}
+          </span>
+          <span className={styles.meta}>
+            <FiCalendar aria-hidden="true" />
+            {formatTripDateRange(group.startDate, group.endDate)}
+          </span>
+        </div>
       </div>
 
-      <Link to={`/grupos/${group.id}`} className={styles.link}>
+      <Link to={`/viajes/${group.id}`} className={styles.link}>
         Abrir
         <FiArrowRight aria-hidden="true" />
       </Link>

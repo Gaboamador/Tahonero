@@ -12,6 +12,8 @@ function CreateGroupPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    startDate: '',
+    endDate: '',
   });
 
   const [error, setError] = useState('');
@@ -43,13 +45,15 @@ function CreateGroupPage() {
       const group = await createGroup({
         name: formData.name,
         description: formData.description,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
         userProfile: resolvedUserProfile,
       });
 
-      navigate(`/grupos/${group.id}`);
+      navigate(`/viajes/${group.id}`);
     } catch (err) {
       console.error(err);
-      setError(err.message || 'No se pudo crear el grupo.');
+      setError(err.message || 'No se pudo crear el viaje.');
     } finally {
       setIsSubmitting(false);
     }
@@ -64,19 +68,19 @@ function CreateGroupPage() {
 
       <form className={styles.card} onSubmit={handleSubmit}>
         <div className={styles.header}>
-          <p className={styles.eyebrow}>Nuevo grupo</p>
-          <h1>Crear grupo</h1>
+          <p className={styles.eyebrow}>Nuevo viaje</p>
+          <h1>Crear viaje</h1>
           <p>
-            Creá una base compartida para cargar gastos de una salida, viaje, casa o reunión.
+            Esta va a ser la base compartida para gastos, comidas, compras y los demás módulos del viaje.
           </p>
         </div>
 
         <label className={styles.field}>
-          <span>Nombre del grupo</span>
+          <span>Nombre del viaje</span>
           <input
             type="text"
             name="name"
-            placeholder="Ej: Viaje Bariloche"
+            placeholder="Ej: Bariloche 2027"
             value={formData.name}
             onChange={handleChange}
             required
@@ -87,18 +91,43 @@ function CreateGroupPage() {
           <span>Descripción opcional</span>
           <textarea
             name="description"
-            placeholder="Ej: Gastos compartidos del viaje"
+            placeholder="Ej: Viaje de verano con amigos"
             rows={4}
             value={formData.description}
             onChange={handleChange}
           />
         </label>
 
+        <div className={styles.dateFields}>
+          <label className={styles.field}>
+            <span>Fecha de inicio</span>
+            <input
+              type="date"
+              name="startDate"
+              value={formData.startDate}
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          <label className={styles.field}>
+            <span>Fecha de fin</span>
+            <input
+              type="date"
+              name="endDate"
+              min={formData.startDate || undefined}
+              value={formData.endDate}
+              onChange={handleChange}
+              required
+            />
+          </label>
+        </div>
+
         {error ? <p className={styles.error}>{error}</p> : null}
 
         <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
           <FiCheck aria-hidden="true" />
-          {isSubmitting ? 'Creando...' : 'Crear grupo'}
+          {isSubmitting ? 'Creando...' : 'Crear viaje'}
         </button>
       </form>
     </section>

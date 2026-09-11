@@ -55,10 +55,24 @@
   }
 }
 
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-xs $space-sm;
+}
+
 .meta {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2xs;
+
   color: $color-text-muted;
   font-size: $font-size-label-sm;
   font-weight: $font-weight-medium;
+
+  svg {
+    flex: 0 0 auto;
+  }
 }
 
 .link {

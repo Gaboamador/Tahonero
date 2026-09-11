@@ -1,0 +1,257 @@
+@use "@/styles/refs" as *;
+
+.page {
+  display: grid;
+  gap: $space-md;
+}
+
+.panel {
+  padding: $space-lg;
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-sm;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-sm;
+  margin-bottom: $space-md;
+
+  h2 {
+    color: $color-text-primary;
+    font-size: $font-size-heading-md;
+  }
+
+  p:not(.eyebrow) {
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+  }
+}
+
+.panelIcon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  color: $color-accent-primary;
+  background: rgba($color-accent-primary, 0.1);
+  border-radius: $radius-lg;
+  place-items: center;
+}
+
+.eyebrow {
+  margin-bottom: $space-2xs;
+  color: $color-accent-primary !important;
+  font-size: $font-size-label-sm;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.formsGrid {
+  display: grid;
+  gap: $space-sm;
+
+  > * {
+    margin-bottom: 0;
+  }
+
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.membersList {
+  display: grid;
+  gap: $space-sm;
+  margin-top: $space-md;
+}
+
+.memberItem {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: $space-sm;
+  padding: $space-sm;
+  background: $color-bg-elevated-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+
+  @media (min-width: 520px) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+}
+
+.avatar {
+  display: grid;
+  overflow: hidden;
+  width: 40px;
+  height: 40px;
+  color: #ffffff;
+  font-weight: $font-weight-bold;
+  text-transform: uppercase;
+  background: $color-accent-secondary;
+  border-radius: $radius-pill;
+  place-items: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.memberInfo {
+  display: grid;
+  min-width: 0;
+
+  strong,
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  strong {
+    color: $color-text-primary;
+    font-size: $font-size-body-sm;
+  }
+
+  span {
+    color: $color-text-muted;
+    font-size: $font-size-body-xs;
+  }
+}
+
+.memberRight {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-sm;
+
+  @media (min-width: 520px) {
+    grid-column: auto;
+    justify-content: flex-end;
+  }
+}
+
+.badges,
+.memberActions,
+.linkMemberActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-xs;
+}
+
+.roleBadge,
+.typeBadge {
+  padding: $space-2xs $space-xs;
+  font-size: $font-size-label-xs;
+  font-weight: $font-weight-bold;
+  border-radius: $radius-pill;
+}
+
+.roleBadge {
+  color: $color-accent-primary;
+  background: rgba($color-accent-primary, 0.1);
+}
+
+.typeBadge {
+  color: $color-text-secondary;
+  background: rgba($color-text-muted, 0.1);
+}
+
+.memberLinkButton,
+.memberDeleteButton {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  color: $color-text-muted;
+  border-radius: $radius-pill;
+  place-items: center;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+  }
+}
+
+.memberLinkButton:not(:disabled):hover {
+  color: $color-accent-secondary;
+  background: rgba($color-accent-secondary, 0.1);
+}
+
+.memberDeleteButton:not(:disabled):hover {
+  color: $color-danger;
+  background: rgba($color-danger, 0.1);
+}
+
+.linkMemberForm {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: $space-sm;
+  padding: $space-sm;
+  background: rgba($color-accent-secondary, 0.08);
+  border: 1px solid rgba($color-accent-secondary, 0.22);
+  border-radius: $radius-md;
+
+  label {
+    display: grid;
+    gap: $space-xs;
+
+    span {
+      color: $color-text-secondary;
+      font-size: $font-size-label-sm;
+      font-weight: $font-weight-medium;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.7rem $space-sm;
+      color: $color-text-primary;
+      background: $color-bg-elevated;
+      border: 1px solid $color-border;
+      border-radius: $radius-md;
+      outline: none;
+    }
+  }
+}
+
+.linkMemberActions button {
+  min-height: 36px;
+  padding: $space-xs $space-sm;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-bold;
+  border-radius: $radius-md;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &:first-child {
+    color: #ffffff;
+    background: $color-accent-secondary;
+  }
+
+  &:last-child {
+    color: $color-text-secondary;
+    background: $color-bg-elevated;
+    border: 1px solid $color-border;
+  }
+}
+
+.error {
+  margin-top: $space-md;
+  padding: $space-sm;
+  color: $color-danger;
+  font-size: $font-size-body-sm;
+  background: rgba($color-danger, 0.08);
+  border: 1px solid rgba($color-danger, 0.22);
+  border-radius: $radius-md;
+}

@@ -40,7 +40,7 @@ function AddMemberForm({ groupId }) {
       });
     } catch (err) {
       console.error(err);
-      setError(err.message || 'No se pudo agregar el miembro.');
+      setError(err.message || 'No se pudo agregar el participante.');
     } finally {
       setIsSubmitting(false);
     }
@@ -77,7 +77,7 @@ function AddMemberForm({ groupId }) {
 
       <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
         <FiPlus aria-hidden="true" />
-        {isSubmitting ? 'Agregando...' : 'Agregar miembro'}
+        {isSubmitting ? 'Agregando...' : 'Agregar participante'}
       </button>
     </form>
   );

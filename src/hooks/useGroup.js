@@ -25,9 +25,9 @@ export function useGroup(groupId) {
         setGroupLoading(false);
       },
       (error) => {
-        console.error('No se pudo cargar el grupo:', error);
+        console.error('No se pudo cargar el viaje:', error);
         setGroup(null);
-        setGroupError('No se pudo cargar el grupo.');
+        setGroupError('No se pudo cargar el viaje.');
         setGroupLoading(false);
       },
     );

@@ -93,7 +93,7 @@ function EditExpensePage() {
         membersMap: group.membersMap,
       });
 
-      navigate(`/grupos/${groupId}`);
+      navigate(`/viajes/${groupId}/gastos`);
     } catch (err) {
       console.error(err);
       setError(err.message || 'No se pudo editar el gasto.');
@@ -115,9 +115,9 @@ function EditExpensePage() {
   if (groupError || expenseError || !canRenderForm) {
     return (
       <section className={styles.page}>
-        <button type="button" className={styles.backButton} onClick={() => navigate(`/grupos/${groupId}`)}>
+        <button type="button" className={styles.backButton} onClick={() => navigate(`/viajes/${groupId}/gastos`)}>
           <FiArrowLeft aria-hidden="true" />
-          Volver al grupo
+          Volver a gastos
         </button>
 
         <article className={styles.statusCard}>
@@ -125,7 +125,7 @@ function EditExpensePage() {
           <p>
             {groupError ||
               expenseError ||
-              'El grupo o el gasto no existen, o no tenés permisos para verlos.'}
+              'El viaje o el gasto no existen, o no tenés permisos para verlos.'}
           </p>
         </article>
       </section>
@@ -134,9 +134,9 @@ function EditExpensePage() {
 
   return (
     <section className={styles.page}>
-      <button type="button" className={styles.backButton} onClick={() => navigate(`/grupos/${groupId}`)}>
+      <button type="button" className={styles.backButton} onClick={() => navigate(`/viajes/${groupId}/gastos`)}>
         <FiArrowLeft aria-hidden="true" />
-        Volver al grupo
+        Volver a gastos
       </button>
 
       <form className={styles.card} onSubmit={handleSubmit}>

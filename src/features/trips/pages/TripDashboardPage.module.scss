@@ -1,0 +1,208 @@
+@use "@/styles/refs" as *;
+
+.page {
+  display: grid;
+  gap: $space-md;
+}
+
+.summaryGrid {
+  display: grid;
+  gap: $space-md;
+
+  @media (min-width: 700px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.summaryCard,
+.modulesSection {
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-sm;
+}
+
+.summaryCard {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-sm;
+  padding: $space-md;
+
+  > svg {
+    flex: 0 0 auto;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 0.1rem;
+    color: $color-accent-secondary;
+  }
+
+  div {
+    display: grid;
+    gap: $space-2xs;
+    min-width: 0;
+  }
+
+  span,
+  small {
+    color: $color-text-muted;
+  }
+
+  span {
+    font-size: $font-size-label-sm;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  strong {
+    color: $color-text-primary;
+    font-size: $font-size-heading-sm;
+  }
+
+  small {
+    font-size: $font-size-body-xs;
+  }
+}
+
+.modulesSection {
+  display: grid;
+  gap: $space-md;
+  padding: $space-lg;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+
+  @media (min-width: 760px) {
+    flex-direction: row;
+    align-items: end;
+    justify-content: space-between;
+    gap: $space-lg;
+  }
+
+  h2 {
+    color: $color-text-primary;
+    font-size: $font-size-heading-md;
+  }
+
+  > p {
+    max-width: 520px;
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+  }
+}
+
+.eyebrow {
+  margin-bottom: $space-2xs;
+
+  color: $color-accent-primary;
+  font-size: $font-size-label-sm;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.modulesGrid {
+  display: grid;
+  gap: $space-sm;
+
+  @media (min-width: 760px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.moduleCard {
+  position: relative;
+
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: $space-sm;
+  align-items: flex-start;
+
+  min-height: 150px;
+  padding: $space-md;
+
+  color: inherit;
+
+  background: $color-bg-elevated-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    background 160ms ease;
+
+  &:not(.disabledModule):hover {
+    border-color: rgba($color-accent-primary, 0.38);
+    background: rgba($color-accent-primary, 0.05);
+    transform: translateY(-1px);
+  }
+}
+
+.moduleIcon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+
+  color: $color-accent-primary;
+
+  background: rgba($color-accent-primary, 0.1);
+  border-radius: $radius-lg;
+
+  place-items: center;
+
+  svg {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+}
+
+.moduleContent {
+  display: grid;
+  gap: $space-xs;
+  min-width: 0;
+
+  h3 {
+    color: $color-text-primary;
+    font-size: $font-size-heading-sm;
+  }
+
+  p {
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+  }
+}
+
+.availableBadge,
+.soonBadge {
+  justify-self: start;
+  padding: $space-2xs $space-xs;
+
+  font-size: $font-size-label-xs;
+  font-weight: $font-weight-bold;
+
+  border-radius: $radius-pill;
+}
+
+.availableBadge {
+  color: $color-success;
+  background: rgba($color-success, 0.1);
+}
+
+.soonBadge {
+  color: $color-text-muted;
+  background: rgba($color-text-muted, 0.1);
+}
+
+.moduleArrow {
+  align-self: center;
+  color: $color-text-muted;
+}
+
+.disabledModule {
+  grid-template-columns: auto minmax(0, 1fr);
+  opacity: 0.72;
+}

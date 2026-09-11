@@ -1,0 +1,201 @@
+@use "@/styles/refs" as *;
+
+.page {
+  display: grid;
+  gap: $space-md;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: $space-xs;
+
+  padding: $space-xs $space-sm;
+
+  color: $color-text-secondary;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-bold;
+
+  border-radius: $radius-pill;
+
+  transition:
+    color 160ms ease,
+    background 160ms ease;
+
+  &:hover {
+    color: $color-text-primary;
+    background: $color-bg-elevated-2;
+  }
+}
+
+.tripHeader,
+.statusCard {
+  padding: $space-lg;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-sm;
+}
+
+.tripHeader {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+
+  background:
+    linear-gradient(135deg, rgba($color-accent-primary, 0.1), transparent),
+    $color-bg-elevated;
+
+  @media (min-width: 720px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.tripInfo {
+  min-width: 0;
+
+  h1 {
+    margin-bottom: $space-xs;
+
+    color: $color-text-primary;
+    font-family: $font-family-display;
+    font-size: $font-size-heading-lg;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+  }
+
+  > p:not(.eyebrow) {
+    max-width: 620px;
+    color: $color-text-secondary;
+  }
+}
+
+.eyebrow {
+  margin-bottom: $space-xs;
+
+  color: $color-accent-primary;
+  font-size: $font-size-label-sm;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dateRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-xs;
+  margin-top: $space-sm;
+
+  color: $color-text-secondary;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-medium;
+
+  svg {
+    flex: 0 0 auto;
+    color: $color-accent-secondary;
+  }
+}
+
+.daysBadge {
+  padding: $space-2xs $space-xs;
+
+  color: $color-accent-secondary;
+  font-size: $font-size-label-xs;
+  font-weight: $font-weight-bold;
+
+  background: rgba($color-accent-secondary, 0.1);
+  border-radius: $radius-pill;
+}
+
+.settingsLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-xs;
+
+  min-height: 42px;
+  padding: $space-xs $space-md;
+
+  color: $color-text-primary;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+
+  background: $color-bg-elevated-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: $color-border-strong;
+    background: $color-bg-elevated;
+    transform: translateY(-1px);
+  }
+}
+
+.tripNav {
+  display: flex;
+  gap: $space-xs;
+  overflow-x: auto;
+  padding: $space-xs;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+}
+
+.navLink {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: $space-xs;
+
+  min-height: 38px;
+  padding: $space-xs $space-sm;
+
+  color: $color-text-secondary;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+
+  border-radius: $radius-md;
+
+  transition:
+    color 160ms ease,
+    background 160ms ease;
+
+  &:hover {
+    color: $color-text-primary;
+    background: $color-bg-elevated-2;
+  }
+}
+
+.activeNavLink {
+  color: $color-accent-primary;
+  background: rgba($color-accent-primary, 0.1);
+}
+
+.statusCard {
+  display: grid;
+  gap: $space-xs;
+
+  h1 {
+    color: $color-text-primary;
+    font-size: $font-size-heading-md;
+  }
+
+  p {
+    color: $color-text-secondary;
+  }
+}

@@ -17,6 +17,7 @@ import {
 import { db } from './firebaseConfig';
 import { getExpenseRef } from './expenseService';
 import { findUserLookupByEmail, normalizeEmail } from './userService';
+import { isValidTripDateRange } from '@/utils/tripUtils';
 
 export function getGroupsCollectionRef() {
   return collection(db, 'groups');
@@ -74,12 +75,16 @@ export function buildManualMember({ name, email = '' }) {
   };
 }
 
-export async function createGroup({ name, description = '', userProfile }) {
+export async function createGroup({ name, description = '', startDate, endDate, userProfile }) {
   const trimmedName = name.trim();
   const trimmedDescription = description.trim();
 
   if (!trimmedName) {
-    throw new Error('El nombre del grupo es obligatorio.');
+    throw new Error('El nombre del viaje es obligatorio.');
+  }
+
+  if (!startDate || !endDate || !isValidTripDateRange(startDate, endDate)) {
+    throw new Error('Elegí un rango de fechas válido para el viaje.');
   }
 
   if (!userProfile?.uid) {
@@ -89,8 +94,12 @@ export async function createGroup({ name, description = '', userProfile }) {
   const ownerMember = buildMemberFromUser(userProfile, 'owner');
 
   const groupPayload = {
+    entityType: 'trip',
+    schemaVersion: 2,
     name: trimmedName,
     description: trimmedDescription,
+    startDate,
+    endDate,
     createdBy: userProfile.uid,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -108,36 +117,51 @@ export async function createGroup({ name, description = '', userProfile }) {
   };
 }
 
-export async function updateGroupDetails({ groupId, name, description = '' }) {
+export async function updateGroupDetails({
+  groupId,
+  name,
+  description = '',
+  startDate = '',
+  endDate = '',
+}) {
   const trimmedName = name.trim();
   const trimmedDescription = description.trim();
+  const hasAnyDate = Boolean(startDate || endDate);
 
   if (!groupId) {
-    throw new Error('Grupo inválido.');
+    throw new Error('Viaje inválido.');
   }
 
   if (!trimmedName) {
-    throw new Error('El nombre del grupo es obligatorio.');
+    throw new Error('El nombre del viaje es obligatorio.');
+  }
+
+  if (hasAnyDate && (!startDate || !endDate || !isValidTripDateRange(startDate, endDate))) {
+    throw new Error('Completá ambas fechas con un rango válido.');
   }
 
   await updateDoc(getGroupRef(groupId), {
+    entityType: 'trip',
+    schemaVersion: 2,
     name: trimmedName,
     description: trimmedDescription,
+    startDate: hasAnyDate ? startDate : deleteField(),
+    endDate: hasAnyDate ? endDate : deleteField(),
     updatedAt: serverTimestamp(),
   });
 }
 
 export async function deleteEmptyGroup({ group, expenses = [] }) {
   if (!group?.id) {
-    throw new Error('Grupo inválido.');
+    throw new Error('Viaje inválido.');
   }
 
   if (expenses.length > 0) {
-    throw new Error('No se puede borrar un grupo que ya tiene movimientos.');
+    throw new Error('No se puede borrar un viaje que ya tiene movimientos.');
   }
 
   const shouldDelete = window.confirm(
-    `¿Borrar el grupo "${group.name}"? Esta acción no se puede deshacer.`,
+    `¿Borrar el viaje "${group.name}"? Esta acción no se puede deshacer.`,
   );
 
   if (!shouldDelete) {
@@ -150,7 +174,7 @@ export async function deleteEmptyGroup({ group, expenses = [] }) {
 
 export async function addManualMemberToGroup({ groupId, name, email = '' }) {
   if (!groupId) {
-    throw new Error('Grupo inválido.');
+    throw new Error('Viaje inválido.');
   }
 
   const member = buildManualMember({ name, email });
@@ -167,7 +191,7 @@ export async function addManualMemberToGroup({ groupId, name, email = '' }) {
 
 export async function addRegisteredUserToGroup({ group, email }) {
   if (!group?.id) {
-    throw new Error('Grupo inválido.');
+    throw new Error('Viaje inválido.');
   }
 
   const normalizedEmail = normalizeEmail(email);
@@ -183,7 +207,7 @@ export async function addRegisteredUserToGroup({ group, email }) {
   }
 
   if (group.memberIds?.includes(userLookup.uid)) {
-    throw new Error('Ese usuario ya es miembro del grupo.');
+    throw new Error('Ese usuario ya participa del viaje.');
   }
 
   const alreadyExistsByEmail = Object.values(group.membersMap || {}).some(
@@ -191,7 +215,7 @@ export async function addRegisteredUserToGroup({ group, email }) {
   );
 
   if (alreadyExistsByEmail) {
-    throw new Error('Ya existe un miembro del grupo con ese email.');
+    throw new Error('Ya existe un participante del viaje con ese email.');
   }
 
   const member = buildMemberFromLookup(userLookup, 'member');
@@ -275,7 +299,7 @@ function buildLinkedExpenseUpdate({ expense, oldMemberId, newMember }) {
 
 export async function linkManualMemberToRegisteredUser({ group, manualMemberId, email, expenses = [] }) {
   if (!group?.id) {
-    throw new Error('Grupo inválido.');
+    throw new Error('Viaje inválido.');
   }
 
   if (!manualMemberId) {
@@ -305,7 +329,7 @@ export async function linkManualMemberToRegisteredUser({ group, manualMemberId, 
   }
 
   if (group.memberIds?.includes(userLookup.uid)) {
-    throw new Error('Ese usuario ya es miembro del grupo.');
+    throw new Error('Ese usuario ya participa del viaje.');
   }
 
   const alreadyExistsByEmail = Object.values(group.membersMap || {}).some(
@@ -313,7 +337,7 @@ export async function linkManualMemberToRegisteredUser({ group, manualMemberId, 
   );
 
   if (alreadyExistsByEmail) {
-    throw new Error('Ya existe otro miembro del grupo con ese email.');
+    throw new Error('Ya existe otro participante del viaje con ese email.');
   }
 
   if (expenses.length > 450) {
@@ -372,7 +396,7 @@ export async function linkManualMemberToRegisteredUser({ group, manualMemberId, 
 
 export async function removeManualMemberFromGroup({ group, memberId, expenses = [] }) {
   if (!group?.id || !memberId) {
-    throw new Error('Grupo o miembro inválido.');
+    throw new Error('Viaje o participante inválido.');
   }
 
   const member = group.membersMap?.[memberId];
@@ -382,7 +406,7 @@ export async function removeManualMemberFromGroup({ group, memberId, expenses = 
   }
 
   if (member.role === 'owner') {
-    throw new Error('No se puede eliminar al administrador del grupo.');
+    throw new Error('No se puede eliminar al administrador del viaje.');
   }
 
   if (member.type !== 'manual') {

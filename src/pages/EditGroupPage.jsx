@@ -23,6 +23,8 @@ function EditGroupPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    startDate: '',
+    endDate: '',
   });
 
   const [formInitialized, setFormInitialized] = useState(false);
@@ -44,6 +46,8 @@ function EditGroupPage() {
     setFormData({
       name: group.name || '',
       description: group.description || '',
+      startDate: group.startDate || '',
+      endDate: group.endDate || '',
     });
 
     setFormInitialized(true);
@@ -69,12 +73,14 @@ function EditGroupPage() {
         groupId,
         name: formData.name,
         description: formData.description,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
       });
 
-      navigate(`/grupos/${groupId}`);
+      navigate(`/viajes/${groupId}`);
     } catch (err) {
       console.error(err);
-      setError(err.message || 'No se pudo editar el grupo.');
+      setError(err.message || 'No se pudo editar el viaje.');
     } finally {
       setIsSubmitting(false);
     }
@@ -95,7 +101,7 @@ function EditGroupPage() {
       }
     } catch (err) {
       console.error(err);
-      setDeleteError(err.message || 'No se pudo borrar el grupo.');
+      setDeleteError(err.message || 'No se pudo borrar el viaje.');
     } finally {
       setIsDeleting(false);
     }
@@ -105,7 +111,7 @@ function EditGroupPage() {
     return (
       <section className={styles.page}>
         <article className={styles.statusCard}>
-          <h1>Cargando grupo...</h1>
+          <h1>Cargando viaje...</h1>
         </article>
       </section>
     );
@@ -120,10 +126,10 @@ function EditGroupPage() {
         </button>
 
         <article className={styles.statusCard}>
-          <h1>No se puede editar el grupo</h1>
+          <h1>No se puede editar el viaje</h1>
           <p>
             {groupError ||
-              'El grupo no existe, no tenés permisos para verlo o no sos administrador.'}
+              'El viaje no existe, no tenés permisos para verlo o no sos administrador.'}
           </p>
         </article>
       </section>
@@ -132,24 +138,24 @@ function EditGroupPage() {
 
   return (
     <section className={styles.page}>
-      <button type="button" className={styles.backButton} onClick={() => navigate(`/grupos/${groupId}`)}>
+      <button type="button" className={styles.backButton} onClick={() => navigate(`/viajes/${groupId}`)}>
         <FiArrowLeft aria-hidden="true" />
-        Volver al grupo
+        Volver al viaje
       </button>
 
       <form className={styles.card} onSubmit={handleSubmit}>
         <div className={styles.header}>
-          <p className={styles.eyebrow}>Editar grupo</p>
+          <p className={styles.eyebrow}>Configurar viaje</p>
           <h1>{group.name}</h1>
-          <p>Cambiá el nombre o la descripción del grupo.</p>
+          <p>Cambiá los datos generales y las fechas del viaje.</p>
         </div>
 
         <label className={styles.field}>
-          <span>Nombre del grupo</span>
+          <span>Nombre del viaje</span>
           <input
             type="text"
             name="name"
-            placeholder="Ej: Viaje Bariloche"
+            placeholder="Ej: Bariloche 2027"
             value={formData.name}
             onChange={handleChange}
             required
@@ -160,12 +166,41 @@ function EditGroupPage() {
           <span>Descripción opcional</span>
           <textarea
             name="description"
-            placeholder="Ej: Gastos compartidos del viaje"
+            placeholder="Ej: Viaje de verano con amigos"
             rows={4}
             value={formData.description}
             onChange={handleChange}
           />
         </label>
+
+        <div className={styles.dateFields}>
+          <label className={styles.field}>
+            <span>Fecha de inicio</span>
+            <input
+              type="date"
+              name="startDate"
+              value={formData.startDate}
+              onChange={handleChange}
+            />
+          </label>
+
+          <label className={styles.field}>
+            <span>Fecha de fin</span>
+            <input
+              type="date"
+              name="endDate"
+              min={formData.startDate || undefined}
+              value={formData.endDate}
+              onChange={handleChange}
+            />
+          </label>
+        </div>
+
+        {!group.startDate || !group.endDate ? (
+          <p className={styles.legacyHint}>
+            Este viaje viene de la versión anterior de Splitter. Podés seguir usándolo sin fechas y cargarlas cuando quieras.
+          </p>
+        ) : null}
 
         {error ? <p className={styles.error}>{error}</p> : null}
 
@@ -178,16 +213,15 @@ function EditGroupPage() {
       <section className={styles.dangerCard}>
         <div>
           <p className={styles.dangerEyebrow}>Zona peligrosa</p>
-          <h2>Borrar grupo</h2>
+          <h2>Borrar viaje</h2>
 
           {canDeleteGroup ? (
             <p>
-              Este grupo no tiene movimientos. Podés borrarlo definitivamente si ya no lo necesitás.
+              Este viaje no tiene movimientos. Podés borrarlo definitivamente si ya no lo necesitás.
             </p>
           ) : (
             <p>
-              Este grupo tiene movimientos cargados. Para evitar perder historial, sólo se puede
-              borrar si está vacío.
+              Este viaje tiene movimientos cargados. Para evitar perder historial, sólo se puede borrar si está vacío.
             </p>
           )}
         </div>
@@ -201,7 +235,7 @@ function EditGroupPage() {
           disabled={!canDeleteGroup || isDeleting}
         >
           <FiTrash2 aria-hidden="true" />
-          {isDeleting ? 'Borrando...' : 'Borrar grupo'}
+          {isDeleting ? 'Borrando...' : 'Borrar viaje'}
         </button>
       </section>
     </section>

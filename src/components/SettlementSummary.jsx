@@ -49,7 +49,7 @@ function SettlementSummary({ groupId, expenses, membersMap }) {
                   <strong>{formatMoneyFromCents(settlement.amountCents)}</strong>
 
                   <Link
-                    to={`/grupos/${groupId}/pagos/nuevo?fromId=${settlement.fromId}&toId=${settlement.toId}&amountCents=${settlement.amountCents}`}
+                    to={`/viajes/${groupId}/pagos/nuevo?fromId=${settlement.fromId}&toId=${settlement.toId}&amountCents=${settlement.amountCents}`}
                     className={styles.paymentLink}
                   >
                     <FiCreditCard aria-hidden="true" />

@@ -1,0 +1,177 @@
+@use "@/styles/refs" as *;
+
+.page {
+  display: grid;
+  gap: $space-md;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+  padding: $space-lg;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-sm;
+
+  @media (min-width: 720px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  h2 {
+    margin-bottom: $space-xs;
+    color: $color-text-primary;
+    font-size: $font-size-heading-md;
+  }
+
+  p:not(.eyebrow) {
+    color: $color-text-secondary;
+  }
+}
+
+.eyebrow {
+  margin-bottom: $space-xs;
+  color: $color-accent-primary !important;
+  font-size: $font-size-label-sm;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.primaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-xs;
+
+  min-height: 44px;
+  padding: $space-sm $space-md;
+
+  color: #ffffff;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+
+  background: $color-accent-primary;
+  border-radius: $radius-md;
+
+  transition: transform 160ms ease;
+
+  &:hover { transform: translateY(-1px); }
+}
+
+.panel {
+  padding: $space-lg;
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-sm;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-sm;
+  margin-bottom: $space-md;
+
+  h3 {
+    color: $color-text-primary;
+    font-size: $font-size-heading-sm;
+  }
+
+  p {
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+  }
+}
+
+.panelIcon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  color: $color-accent-primary;
+  background: rgba($color-accent-primary, 0.1);
+  border-radius: $radius-lg;
+  place-items: center;
+}
+
+.placeholderBox {
+  display: grid;
+  justify-items: center;
+  gap: $space-sm;
+  padding: $space-xl $space-md;
+  color: $color-text-secondary;
+  text-align: center;
+  background: $color-bg-elevated-2;
+  border: 1px dashed $color-border-strong;
+  border-radius: $radius-lg;
+
+  svg {
+    width: 2rem;
+    height: 2rem;
+    color: $color-text-muted;
+  }
+}
+
+.movementFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-xs;
+  margin-bottom: $space-md;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-xs;
+    min-height: 36px;
+    padding: $space-xs $space-sm;
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+    font-weight: $font-weight-bold;
+    background: $color-bg-elevated-2;
+    border: 1px solid $color-border;
+    border-radius: $radius-pill;
+
+    span {
+      display: inline-grid;
+      min-width: 1.35rem;
+      height: 1.35rem;
+      padding: 0 $space-2xs;
+      color: $color-text-muted;
+      font-size: $font-size-label-xs;
+      background: rgba($color-text-muted, 0.1);
+      border-radius: $radius-pill;
+      place-items: center;
+    }
+  }
+}
+
+.activeFilter {
+  color: $color-accent-primary !important;
+  background: rgba($color-accent-primary, 0.1) !important;
+  border-color: rgba($color-accent-primary, 0.3) !important;
+
+  span {
+    color: $color-accent-primary !important;
+    background: rgba($color-accent-primary, 0.12) !important;
+  }
+}
+
+.expensesList {
+  display: grid;
+  gap: $space-sm;
+}
+
+.error {
+  margin-bottom: $space-md;
+  padding: $space-sm;
+  color: $color-danger;
+  font-size: $font-size-body-sm;
+  background: rgba($color-danger, 0.08);
+  border: 1px solid rgba($color-danger, 0.22);
+  border-radius: $radius-md;
+}

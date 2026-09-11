@@ -28,8 +28,8 @@ export function useUserGroups() {
         setGroupsLoading(false);
       },
       (error) => {
-        console.error('No se pudieron cargar los grupos:', error);
-        setGroupsError('No se pudieron cargar los grupos.');
+        console.error('No se pudieron cargar los viajes:', error);
+        setGroupsError('No se pudieron cargar los viajes.');
         setGroupsLoading(false);
       },
     );
