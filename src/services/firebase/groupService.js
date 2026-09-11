@@ -12,10 +12,8 @@ import {
   serverTimestamp,
   updateDoc,
   where,
-  writeBatch,
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
-import { getExpenseRef } from './expenseService';
 import { findUserLookupByEmail, normalizeEmail } from './userService';
 import { isValidTripDateRange } from '@/utils/tripUtils';
 
@@ -27,9 +25,48 @@ export function getGroupRef(groupId) {
   return doc(db, 'groups', groupId);
 }
 
+function uniqueIds(ids = []) {
+  return Array.from(new Set(ids.filter(Boolean)));
+}
+
+function normalizeMember(member, fallbackMemberId = '') {
+  const memberId = member?.memberId || member?.uid || fallbackMemberId;
+  const inferredUserUid = member?.type === 'user' ? member?.uid || fallbackMemberId : '';
+  const userUid = member?.userUid || inferredUserUid;
+
+  return {
+    ...member,
+    uid: memberId,
+    memberId,
+    userUid,
+  };
+}
+
+function getMembershipState(group) {
+  const members = getGroupMembers(group);
+  const participantIds = uniqueIds(members.map((member) => member.memberId));
+  const accessUserIds = uniqueIds([
+    ...(group?.accessUserIds || []),
+    group?.createdBy,
+    ...members.map((member) => member.userUid),
+  ]);
+
+  return {
+    participantIds,
+    accessUserIds,
+    legacyMemberIds: uniqueIds([
+      ...(group?.memberIds || []),
+      ...participantIds,
+      ...accessUserIds,
+    ]),
+  };
+}
+
 export function buildMemberFromUser(userProfile, role = 'member') {
   return {
     uid: userProfile.uid,
+    memberId: userProfile.uid,
+    userUid: userProfile.uid,
     displayName: userProfile.displayName || userProfile.email || 'Usuario',
     email: normalizeEmail(userProfile.email || ''),
     photoURL: userProfile.photoURL || '',
@@ -42,6 +79,8 @@ export function buildMemberFromUser(userProfile, role = 'member') {
 export function buildMemberFromLookup(userLookup, role = 'member') {
   return {
     uid: userLookup.uid,
+    memberId: userLookup.uid,
+    userUid: userLookup.uid,
     displayName: userLookup.displayName || userLookup.email || 'Usuario',
     email: normalizeEmail(userLookup.email || ''),
     photoURL: userLookup.photoURL || '',
@@ -66,6 +105,8 @@ export function buildManualMember({ name, email = '' }) {
 
   return {
     uid: id,
+    memberId: id,
+    userUid: '',
     displayName: cleanName,
     email: cleanEmail,
     photoURL: '',
@@ -95,7 +136,7 @@ export async function createGroup({ name, description = '', startDate, endDate, 
 
   const groupPayload = {
     entityType: 'trip',
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: trimmedName,
     description: trimmedDescription,
     startDate,
@@ -104,6 +145,8 @@ export async function createGroup({ name, description = '', startDate, endDate, 
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     memberIds: [userProfile.uid],
+    participantIds: [userProfile.uid],
+    accessUserIds: [userProfile.uid],
     membersMap: {
       [userProfile.uid]: ownerMember,
     },
@@ -142,7 +185,6 @@ export async function updateGroupDetails({
 
   await updateDoc(getGroupRef(groupId), {
     entityType: 'trip',
-    schemaVersion: 2,
     name: trimmedName,
     description: trimmedDescription,
     startDate: hasAnyDate ? startDate : deleteField(),
@@ -172,19 +214,31 @@ export async function deleteEmptyGroup({ group, expenses = [] }) {
   return true;
 }
 
-export async function addManualMemberToGroup({ groupId, name, email = '' }) {
-  if (!groupId) {
+export async function addManualMemberToGroup({ group, groupId, name, email = '' }) {
+  const resolvedGroupId = group?.id || groupId;
+
+  if (!resolvedGroupId) {
     throw new Error('Viaje inválido.');
   }
 
   const member = buildManualMember({ name, email });
-  const groupRef = getGroupRef(groupId);
+  const groupRef = getGroupRef(resolvedGroupId);
+  const membershipState = group ? getMembershipState(group) : null;
 
-  await updateDoc(groupRef, {
+  const update = {
     [`membersMap.${member.uid}`]: member,
     memberIds: arrayUnion(member.uid),
     updatedAt: serverTimestamp(),
-  });
+  };
+
+  if (membershipState) {
+    update.schemaVersion = 3;
+    update.participantIds = uniqueIds([...membershipState.participantIds, member.memberId]);
+    update.accessUserIds = membershipState.accessUserIds;
+    update.memberIds = uniqueIds([...membershipState.legacyMemberIds, member.memberId]);
+  }
+
+  await updateDoc(groupRef, update);
 
   return member;
 }
@@ -206,7 +260,7 @@ export async function addRegisteredUserToGroup({ group, email }) {
     throw new Error('No encontramos un usuario registrado con ese email.');
   }
 
-  if (group.memberIds?.includes(userLookup.uid)) {
+  if (getGroupMemberByUserUid(group, userLookup.uid)) {
     throw new Error('Ese usuario ya participa del viaje.');
   }
 
@@ -219,85 +273,25 @@ export async function addRegisteredUserToGroup({ group, email }) {
   }
 
   const member = buildMemberFromLookup(userLookup, 'member');
+  const membershipState = getMembershipState(group);
 
   await updateDoc(getGroupRef(group.id), {
     [`membersMap.${member.uid}`]: member,
-    memberIds: arrayUnion(member.uid),
+    schemaVersion: 3,
+    participantIds: uniqueIds([...membershipState.participantIds, member.memberId]),
+    accessUserIds: uniqueIds([...membershipState.accessUserIds, member.userUid]),
+    memberIds: uniqueIds([
+      ...membershipState.legacyMemberIds,
+      member.memberId,
+      member.userUid,
+    ]),
     updatedAt: serverTimestamp(),
   });
 
   return member;
 }
 
-function replaceMemberIdInArray(items = [], oldMemberId, newMemberId) {
-  const replaced = items.map((item) => (item === oldMemberId ? newMemberId : item));
-  return Array.from(new Set(replaced));
-}
-
-function replaceMemberIdInSharesMap(sharesMap = {}, oldMemberId, newMemberId) {
-  if (!sharesMap[oldMemberId]) {
-    return sharesMap;
-  }
-
-  const nextSharesMap = {
-    ...sharesMap,
-  };
-
-  const oldShare = Number(nextSharesMap[oldMemberId]) || 0;
-  const existingNewShare = Number(nextSharesMap[newMemberId]) || 0;
-
-  delete nextSharesMap[oldMemberId];
-
-  nextSharesMap[newMemberId] = existingNewShare + oldShare;
-
-  return nextSharesMap;
-}
-
-function buildLinkedExpenseUpdate({ expense, oldMemberId, newMember }) {
-  const transactionType = expense.transactionType || 'expense';
-  const update = {
-    updatedAt: serverTimestamp(),
-  };
-
-  if (transactionType === 'payment') {
-    if (expense.fromId === oldMemberId) {
-      update.fromId = newMember.uid;
-      update.fromName = newMember.displayName || newMember.email || 'Usuario';
-    }
-
-    if (expense.toId === oldMemberId) {
-      update.toId = newMember.uid;
-      update.toName = newMember.displayName || newMember.email || 'Usuario';
-    }
-
-    return update;
-  }
-
-  if (expense.paidBy === oldMemberId) {
-    update.paidBy = newMember.uid;
-    update.paidByName = newMember.displayName || newMember.email || 'Usuario';
-  }
-
-  if (expense.participantIds?.includes(oldMemberId)) {
-    update.participantIds = replaceMemberIdInArray(
-      expense.participantIds,
-      oldMemberId,
-      newMember.uid,
-    );
-  }
-
-  if (expense.sharesMap?.[oldMemberId]) {
-    update.sharesMap = replaceMemberIdInSharesMap(
-      expense.sharesMap,
-      oldMemberId,
-      newMember.uid,
-    );
-  }
-
-  return update;
-}
-
-export async function linkManualMemberToRegisteredUser({ group, manualMemberId, email, expenses = [] }) {
+export async function linkManualMemberToRegisteredUser({ group, manualMemberId, email }) {
   if (!group?.id) {
     throw new Error('Viaje inválido.');
   }
@@ -306,11 +300,13 @@ export async function linkManualMemberToRegisteredUser({ group, manualMemberId, 
     throw new Error('Miembro inválido.');
   }
 
-  const manualMember = group.membersMap?.[manualMemberId];
+  const storedManualMember = group.membersMap?.[manualMemberId];
 
-  if (!manualMember) {
+  if (!storedManualMember) {
     throw new Error('El miembro manual no existe.');
   }
+
+  const manualMember = normalizeMember(storedManualMember, manualMemberId);
 
   if (manualMember.type !== 'manual') {
     throw new Error('Sólo se pueden vincular miembros manuales.');
@@ -328,68 +324,46 @@ export async function linkManualMemberToRegisteredUser({ group, manualMemberId, 
     throw new Error('No encontramos un usuario registrado con ese email.');
   }
 
-  if (group.memberIds?.includes(userLookup.uid)) {
+  const existingMemberForUser = getGroupMemberByUserUid(group, userLookup.uid);
+
+  if (existingMemberForUser && existingMemberForUser.memberId !== manualMemberId) {
     throw new Error('Ese usuario ya participa del viaje.');
   }
 
-  const alreadyExistsByEmail = Object.values(group.membersMap || {}).some(
-    (member) => member.uid !== manualMemberId && normalizeEmail(member.email) === normalizedEmail,
+  const alreadyExistsByEmail = Object.entries(group.membersMap || {}).some(
+    ([memberId, member]) =>
+      memberId !== manualMemberId && normalizeEmail(member.email) === normalizedEmail,
   );
 
   if (alreadyExistsByEmail) {
     throw new Error('Ya existe otro participante del viaje con ese email.');
   }
 
-  if (expenses.length > 450) {
-    throw new Error('Hay demasiados movimientos para vincular este miembro de forma segura.');
-  }
+  const linkedMember = {
+    ...manualMember,
+    uid: manualMemberId,
+    memberId: manualMemberId,
+    userUid: userLookup.uid,
+    displayName: userLookup.displayName || manualMember.displayName || userLookup.email || 'Usuario',
+    email: normalizeEmail(userLookup.email || normalizedEmail),
+    photoURL: userLookup.photoURL || manualMember.photoURL || '',
+    role: manualMember.role || 'member',
+    type: 'user',
+    linkedFromManualMemberId: manualMemberId,
+    linkedFromManualMemberName: manualMember.displayName || '',
+    linkedAt: new Date().toISOString(),
+  };
 
-  const linkedMember = buildMemberFromLookup(userLookup, manualMember.role || 'member');
-  const batch = writeBatch(db);
+  const membershipState = getMembershipState(group);
 
-  batch.update(getGroupRef(group.id), {
-    [`membersMap.${manualMemberId}`]: deleteField(),
-    [`membersMap.${linkedMember.uid}`]: {
-      ...linkedMember,
-      linkedFromManualMemberId: manualMemberId,
-      linkedFromManualMemberName: manualMember.displayName || '',
-      linkedAt: new Date().toISOString(),
-    },
-    memberIds: arrayUnion(linkedMember.uid),
+  await updateDoc(getGroupRef(group.id), {
+    [`membersMap.${manualMemberId}`]: linkedMember,
+    schemaVersion: 3,
+    participantIds: membershipState.participantIds,
+    accessUserIds: uniqueIds([...membershipState.accessUserIds, userLookup.uid]),
+    memberIds: uniqueIds([...membershipState.legacyMemberIds, userLookup.uid]),
     updatedAt: serverTimestamp(),
   });
-
-  batch.update(getGroupRef(group.id), {
-    memberIds: arrayRemove(manualMemberId),
-  });
-
-  expenses.forEach((expense) => {
-    const transactionType = expense.transactionType || 'expense';
-
-    const isUsed =
-      expense.paidBy === manualMemberId ||
-      expense.participantIds?.includes(manualMemberId) ||
-      Boolean(expense.sharesMap?.[manualMemberId]) ||
-      expense.fromId === manualMemberId ||
-      expense.toId === manualMemberId;
-
-    if (!isUsed) {
-      return;
-    }
-
-    const update = {
-      ...buildLinkedExpenseUpdate({
-        expense,
-        oldMemberId: manualMemberId,
-        newMember: linkedMember,
-      }),
-      transactionType,
-    };
-
-    batch.update(getExpenseRef(group.id, expense.id), update);
-  });
-
-  await batch.commit();
 
   return linkedMember;
 }
@@ -432,6 +406,7 @@ export async function removeManualMemberFromGroup({ group, memberId, expenses = 
   await updateDoc(getGroupRef(group.id), {
     [`membersMap.${memberId}`]: deleteField(),
     memberIds: arrayRemove(memberId),
+    participantIds: arrayRemove(memberId),
     updatedAt: serverTimestamp(),
   });
 }
@@ -441,6 +416,8 @@ export function subscribeToUserGroups(uid, callback, errorCallback) {
     return () => {};
   }
 
+  // `memberIds` remains the compatibility field used by the current query/rules.
+  // New documents also keep `participantIds` and `accessUserIds` separated.
   const groupsQuery = query(
     getGroupsCollectionRef(),
     where('memberIds', 'array-contains', uid),
@@ -488,12 +465,22 @@ export function getGroupMembers(group) {
     return [];
   }
 
-  return Object.values(group.membersMap).sort((a, b) => {
-    if (a.role === 'owner' && b.role !== 'owner') return -1;
-    if (a.role !== 'owner' && b.role === 'owner') return 1;
+  return Object.entries(group.membersMap)
+    .map(([memberId, member]) => normalizeMember(member, memberId))
+    .sort((a, b) => {
+      if (a.role === 'owner' && b.role !== 'owner') return -1;
+      if (a.role !== 'owner' && b.role === 'owner') return 1;
 
-    return (a.displayName || a.email || '').localeCompare(b.displayName || b.email || '');
-  });
+      return (a.displayName || a.email || '').localeCompare(b.displayName || b.email || '');
+    });
+}
+
+export function getGroupMemberByUserUid(group, userUid) {
+  if (!group || !userUid) {
+    return null;
+  }
+
+  return getGroupMembers(group).find((member) => member.userUid === userUid) || null;
 }
 
 export function isUserGroupMember(group, uid) {
@@ -501,7 +488,11 @@ export function isUserGroupMember(group, uid) {
     return false;
   }
 
-  return group.memberIds?.includes(uid);
+  return (
+    group.accessUserIds?.includes(uid) ||
+    Boolean(getGroupMemberByUserUid(group, uid)) ||
+    group.memberIds?.includes(uid)
+  );
 }
 
 export function isGroupOwner(group, uid) {
@@ -509,5 +500,5 @@ export function isGroupOwner(group, uid) {
     return false;
   }
 
-  return group.createdBy === uid || group.membersMap?.[uid]?.role === 'owner';
+  return group.createdBy === uid || getGroupMemberByUserUid(group, uid)?.role === 'owner';
 }

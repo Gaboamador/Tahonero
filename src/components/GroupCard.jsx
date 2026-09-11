@@ -4,7 +4,7 @@ import { formatTripDateRange } from '@/utils/tripUtils';
 import styles from './GroupCard.module.scss';
 
 function GroupCard({ group }) {
-  const membersCount = group.memberIds?.length || 0;
+  const membersCount = Object.keys(group.membersMap || {}).length;
 
   return (
     <article className={styles.card}>

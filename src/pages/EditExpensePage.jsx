@@ -175,7 +175,7 @@ function EditExpensePage() {
           <span>Pagado por</span>
           <select name="paidBy" value={formData.paidBy} onChange={handleChange} required>
             {members.map((member) => (
-              <option key={member.uid} value={member.uid}>
+              <option key={member.memberId} value={member.memberId}>
                 {member.displayName || member.email || 'Usuario'}
               </option>
             ))}
@@ -187,15 +187,15 @@ function EditExpensePage() {
 
           <div className={styles.participantsList}>
             {members.map((member) => {
-              const isChecked = formData.participantIds.includes(member.uid);
-              const shareCents = previewSharesMap[member.uid] || 0;
+              const isChecked = formData.participantIds.includes(member.memberId);
+              const shareCents = previewSharesMap[member.memberId] || 0;
 
               return (
-                <label key={member.uid} className={styles.participantItem}>
+                <label key={member.memberId} className={styles.participantItem}>
                   <input
                     type="checkbox"
                     checked={isChecked}
-                    onChange={() => handleParticipantToggle(member.uid)}
+                    onChange={() => handleParticipantToggle(member.memberId)}
                   />
 
                   <span className={styles.participantName}>

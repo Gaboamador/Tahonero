@@ -113,7 +113,7 @@ function CreatePaymentPage() {
           <select name="fromId" value={formData.fromId} onChange={handleChange} required>
             <option value="">Elegir miembro</option>
             {members.map((member) => (
-              <option key={member.uid} value={member.uid}>
+              <option key={member.memberId} value={member.memberId}>
                 {member.displayName || member.email || 'Usuario'}
               </option>
             ))}
@@ -125,7 +125,7 @@ function CreatePaymentPage() {
           <select name="toId" value={formData.toId} onChange={handleChange} required>
             <option value="">Elegir miembro</option>
             {members.map((member) => (
-              <option key={member.uid} value={member.uid}>
+              <option key={member.memberId} value={member.memberId}>
                 {member.displayName || member.email || 'Usuario'}
               </option>
             ))}

@@ -3,7 +3,7 @@ import { FiPlus } from 'react-icons/fi';
 import { addManualMemberToGroup } from '@/services/firebase/groupService';
 import styles from './AddMemberForm.module.scss';
 
-function AddMemberForm({ groupId }) {
+function AddMemberForm({ group, groupId }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -29,7 +29,8 @@ function AddMemberForm({ groupId }) {
 
     try {
       await addManualMemberToGroup({
-        groupId,
+        group,
+        groupId: group?.id || groupId,
         name: formData.name,
         email: formData.email,
       });

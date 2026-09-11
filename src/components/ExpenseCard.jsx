@@ -11,6 +11,21 @@ function ExpenseCard({ expense, groupId, membersMap }) {
 
   const transactionType = expense.transactionType || 'expense';
   const isPayment = transactionType === 'payment';
+  const paidByName =
+    membersMap?.[expense.paidBy]?.displayName ||
+    membersMap?.[expense.paidBy]?.email ||
+    expense.paidByName ||
+    'Usuario';
+  const fromName =
+    membersMap?.[expense.fromId]?.displayName ||
+    membersMap?.[expense.fromId]?.email ||
+    expense.fromName ||
+    'Usuario';
+  const toName =
+    membersMap?.[expense.toId]?.displayName ||
+    membersMap?.[expense.toId]?.email ||
+    expense.toName ||
+    'Usuario';
 
   const participantNames = expense.participantIds
     ?.map((participantId) => {
@@ -20,7 +35,7 @@ function ExpenseCard({ expense, groupId, membersMap }) {
     .join(', ');
 
   const handleDelete = async () => {
-    const label = isPayment ? expense.description : `el gasto "${expense.description}"`;
+    const label = isPayment ? `el pago de ${fromName} a ${toName}` : `el gasto "${expense.description}"`;
 
     const shouldDelete = window.confirm(
       `¿Borrar ${label}? Esta acción no se puede deshacer.`,
@@ -52,18 +67,18 @@ function ExpenseCard({ expense, groupId, membersMap }) {
 
       <div className={styles.content}>
         <div className={styles.titleRow}>
-          <h3>{expense.description}</h3>
+          <h3>{isPayment ? `Pago de ${fromName} a ${toName}` : expense.description}</h3>
           <strong>{formatMoneyFromCents(expense.totalAmountCents, expense.currency)}</strong>
         </div>
 
         {isPayment ? (
           <p>
-            <strong>{expense.fromName}</strong> le pagó a <strong>{expense.toName}</strong>
+            <strong>{fromName}</strong> le pagó a <strong>{toName}</strong>
           </p>
         ) : (
           <>
             <p>
-              Pagó <strong>{expense.paidByName}</strong>
+              Pagó <strong>{paidByName}</strong>
             </p>
 
             <p className={styles.participants}>

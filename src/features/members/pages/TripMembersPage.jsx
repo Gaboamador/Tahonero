@@ -33,12 +33,12 @@ function TripMembersPage() {
     }
 
     setMemberActionError('');
-    setDeletingMemberId(member.uid);
+    setDeletingMemberId(member.memberId);
 
     try {
       await removeManualMemberFromGroup({
         group,
-        memberId: member.uid,
+        memberId: member.memberId,
         expenses,
       });
     } catch (error) {
@@ -51,7 +51,7 @@ function TripMembersPage() {
 
   const handleOpenLinkMember = (member) => {
     setMemberActionError('');
-    setLinkingMemberId(member.uid);
+    setLinkingMemberId(member.memberId);
     setLinkEmail(member.email || '');
   };
 
@@ -104,7 +104,7 @@ function TripMembersPage() {
 
         <div className={styles.formsGrid}>
           <AddRegisteredUserForm group={group} />
-          <AddMemberForm groupId={group.id} />
+          <AddMemberForm group={group} />
         </div>
 
         {memberActionError ? <p className={styles.error}>{memberActionError}</p> : null}
@@ -115,7 +115,7 @@ function TripMembersPage() {
             const canLinkMember = member.type === 'manual';
 
             return (
-              <li key={member.uid} className={styles.memberItem}>
+              <li key={member.memberId} className={styles.memberItem}>
                 <div className={styles.avatar}>
                   {member.photoURL ? (
                     <img src={member.photoURL} alt="" />
@@ -131,7 +131,11 @@ function TripMembersPage() {
 
                 <div className={styles.memberRight}>
                   <div className={styles.badges}>
-                    {member.type === 'manual' ? <span className={styles.typeBadge}>Manual</span> : null}
+                    {member.linkedFromManualMemberId ? (
+                      <span className={styles.typeBadge}>Vinculado</span>
+                    ) : member.type === 'manual' ? (
+                      <span className={styles.typeBadge}>Manual</span>
+                    ) : null}
                     {member.role === 'owner' ? <span className={styles.roleBadge}>Admin</span> : null}
                   </div>
 
@@ -153,7 +157,7 @@ function TripMembersPage() {
                         type="button"
                         className={styles.memberDeleteButton}
                         onClick={() => handleRemoveMember(member)}
-                        disabled={deletingMemberId === member.uid || expensesLoading || isLinking}
+                        disabled={deletingMemberId === member.memberId || expensesLoading || isLinking}
                         aria-label={`Eliminar participante ${member.displayName || member.email}`}
                       >
                         <FiTrash2 aria-hidden="true" />
@@ -162,7 +166,7 @@ function TripMembersPage() {
                   </div>
                 </div>
 
-                {linkingMemberId === member.uid ? (
+                {linkingMemberId === member.memberId ? (
                   <form className={styles.linkMemberForm} onSubmit={handleLinkMember}>
                     <label>
                       <span>Email del usuario registrado</span>
