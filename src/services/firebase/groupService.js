@@ -6,6 +6,7 @@ import {
   deleteDoc,
   deleteField,
   doc,
+  getDoc,
   getDocs,
   limit,
   onSnapshot,
@@ -63,6 +64,45 @@ function getMembershipState(group) {
       ...accessUserIds,
     ]),
   };
+}
+
+async function appendTripLibrarySharingToBatch(batch, groupId, userUid) {
+  if (!groupId || !userUid) return false;
+
+  const [mealsSnapshot, empanadaConfigSnapshot] = await Promise.all([
+    getDocs(collection(db, 'groups', groupId, 'meals')),
+    getDoc(doc(db, 'groups', groupId, 'empanadaConfig', 'main')),
+  ]);
+
+  let hasWrites = false;
+  const sharedRecipeIds = new Set();
+  mealsSnapshot.docs.forEach((mealDoc) => {
+    const meal = mealDoc.data();
+    if (meal.sourceRecipeScope === 'shared' && meal.sourceRecipeId) {
+      sharedRecipeIds.add(meal.sourceRecipeId);
+    }
+  });
+
+  sharedRecipeIds.forEach((recipeId) => {
+    batch.update(doc(db, 'recipes', recipeId), {
+      accessUserIds: arrayUnion(userUid),
+      updatedAt: serverTimestamp(),
+    });
+    hasWrites = true;
+  });
+
+  if (empanadaConfigSnapshot.exists()) {
+    const config = empanadaConfigSnapshot.data();
+    if (config.sourceVendorScope === 'shared' && config.sourceVendorId) {
+      batch.update(doc(db, 'empanadaVendors', config.sourceVendorId), {
+        accessUserIds: arrayUnion(userUid),
+        updatedAt: serverTimestamp(),
+      });
+      hasWrites = true;
+    }
+  }
+
+  return hasWrites;
 }
 
 export function buildMemberFromUser(userProfile, role = 'member') {
@@ -250,7 +290,7 @@ export async function deleteEmptyGroup({ group, expenses = [] }) {
     throw new Error('No se puede borrar un viaje que ya tiene movimientos.');
   }
 
-  const foodCollectionNames = ['meals', 'mealPlan', 'foodExtras', 'drinkPlans'];
+  const foodCollectionNames = ['meals', 'mealPlan', 'foodExtras', 'drinkPlans', 'empanadaConfig', 'empanadaOrders'];
   const foodSnapshots = await Promise.all(
     foodCollectionNames.map((collectionName) =>
       getDocs(query(collection(db, 'groups', group.id, collectionName), limit(1))),
@@ -259,7 +299,7 @@ export async function deleteEmptyGroup({ group, expenses = [] }) {
 
   if (foodSnapshots.some((snapshot) => !snapshot.empty)) {
     throw new Error(
-      'No se puede borrar el viaje porque tiene comidas, extras o bebidas cargados.',
+      'No se puede borrar el viaje porque tiene comidas, extras, bebidas o datos de empanadas cargados.',
     );
   }
 
@@ -271,6 +311,13 @@ export async function deleteEmptyGroup({ group, expenses = [] }) {
     return false;
   }
 
+  // shoppingState is derived/disposable. If source food data is already empty,
+  // clean any stale checked-state documents before deleting the trip.
+  const shoppingStateSnapshot = await getDocs(
+    collection(db, 'groups', group.id, 'shoppingState'),
+  );
+
+  await Promise.all(shoppingStateSnapshot.docs.map((stateDoc) => deleteDoc(stateDoc.ref)));
   await deleteDoc(getGroupRef(group.id));
   return true;
 }
@@ -349,6 +396,18 @@ export async function addRegisteredUserToGroup({ group, email }) {
     updatedAt: serverTimestamp(),
   });
 
+  try {
+    const sharingBatch = writeBatch(db);
+    const hasSharingWrites = await appendTripLibrarySharingToBatch(
+      sharingBatch,
+      group.id,
+      member.userUid,
+    );
+    if (hasSharingWrites) await sharingBatch.commit();
+  } catch (error) {
+    console.warn('El participante fue agregado, pero algún recurso compartido se sincronizará al volver a abrir su módulo:', error);
+  }
+
   return member;
 }
 
@@ -426,6 +485,18 @@ export async function linkManualMemberToRegisteredUser({ group, manualMemberId, 
     updatedAt: serverTimestamp(),
   });
 
+  try {
+    const sharingBatch = writeBatch(db);
+    const hasSharingWrites = await appendTripLibrarySharingToBatch(
+      sharingBatch,
+      group.id,
+      userLookup.uid,
+    );
+    if (hasSharingWrites) await sharingBatch.commit();
+  } catch (error) {
+    console.warn('El participante fue vinculado, pero algún recurso compartido se sincronizará al volver a abrir su módulo:', error);
+  }
+
   return linkedMember;
 }
 
@@ -474,6 +545,19 @@ export async function removeManualMemberFromGroup({ group, memberId, expenses = 
   if (!drinkUsageSnapshot.empty) {
     throw new Error(
       'No se puede eliminar este participante porque está incluido en un cálculo de bebidas. Editá esa bebida primero.',
+    );
+  }
+
+  const empanadaOrderQuery = query(
+    collection(db, 'groups', group.id, 'empanadaOrders'),
+    where('memberId', '==', memberId),
+    limit(1),
+  );
+  const empanadaOrderSnapshot = await getDocs(empanadaOrderQuery);
+
+  if (!empanadaOrderSnapshot.empty) {
+    throw new Error(
+      'No se puede eliminar este participante porque tiene un pedido de empanadas cargado. Eliminá ese pedido primero.',
     );
   }
 

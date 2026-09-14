@@ -1,11 +1,17 @@
 import { useId } from 'react';
 import styles from './MealsModule.module.scss';
 
-function PurchasePlaceInput({ value, onChange, suggestions = [], label = 'Lugar de compra' }) {
+function PurchasePlaceInput({
+  value,
+  onChange,
+  suggestions = [],
+  label = 'Lugar de compra',
+  className = '',
+}) {
   const datalistId = useId();
 
   return (
-    <label className={styles.field}>
+    <label className={`${styles.field} ${className}`.trim()}>
       <span>{label}</span>
       <input
         type="text"

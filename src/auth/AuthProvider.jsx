@@ -11,7 +11,11 @@ export function AuthProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let authRunId = 0;
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const runId = ++authRunId;
+
       setCurrentUser(user);
 
       if (!user) {
@@ -20,18 +24,32 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      try {
-        const profile = await ensureUserProfile(user);
-        setUserProfile(profile);
-      } catch (error) {
-        console.error('No se pudo asegurar el perfil de usuario:', error);
-        setUserProfile(null);
-      } finally {
-        setAuthLoading(false);
-      }
+      // La sesión ya está resuelta: no bloqueamos la UI mientras Firestore
+      // asegura/sincroniza el perfil del usuario.
+      setAuthLoading(false);
+
+      ensureUserProfile(user)
+        .then((profile) => {
+          if (runId !== authRunId) {
+            return;
+          }
+
+          setUserProfile(profile);
+        })
+        .catch((error) => {
+          if (runId !== authRunId) {
+            return;
+          }
+
+          console.error('No se pudo asegurar el perfil de usuario:', error);
+          setUserProfile(null);
+        });
     });
 
-    return unsubscribe;
+    return () => {
+      authRunId += 1;
+      unsubscribe();
+    };
   }, []);
 
   const value = useMemo(

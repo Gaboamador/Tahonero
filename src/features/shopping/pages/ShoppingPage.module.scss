@@ -1,0 +1,259 @@
+@use "@/styles/refs" as *;
+
+.page {
+  display: grid;
+  gap: $space-md;
+}
+
+.hero {
+  padding: $space-lg;
+
+  background:
+    linear-gradient(135deg, rgba($color-accent-secondary, 0.1), transparent),
+    $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-sm;
+
+  h2 {
+    margin-bottom: $space-xs;
+    color: $color-text-primary;
+    font-family: $font-family-display;
+    font-size: $font-size-heading-md;
+  }
+
+  p:not(.eyebrow) {
+    max-width: 760px;
+    color: $color-text-secondary;
+  }
+}
+
+.eyebrow {
+  margin-bottom: $space-xs;
+  color: $color-accent-secondary !important;
+  font-size: $font-size-label-sm;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.summaryGrid {
+  display: grid;
+  gap: $space-sm;
+
+  @media (min-width: 680px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.summaryCard {
+  display: flex;
+  gap: $space-sm;
+  align-items: flex-start;
+  padding: $space-md;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+
+  > svg {
+    flex: 0 0 auto;
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-top: 0.15rem;
+    color: $color-accent-secondary;
+  }
+
+  div {
+    display: grid;
+    gap: $space-2xs;
+  }
+
+  span,
+  small {
+    color: $color-text-muted;
+  }
+
+  span {
+    font-size: $font-size-label-xs;
+    font-weight: $font-weight-bold;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  strong {
+    color: $color-text-primary;
+    font-size: $font-size-heading-sm;
+  }
+
+  small {
+    font-size: $font-size-body-xs;
+  }
+}
+
+.error,
+.loading {
+  padding: $space-sm $space-md;
+  font-size: $font-size-body-sm;
+  border-radius: $radius-md;
+}
+
+.error {
+  color: $color-danger;
+  background: rgba($color-danger, 0.08);
+  border: 1px solid rgba($color-danger, 0.22);
+}
+
+.loading {
+  color: $color-text-secondary;
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+}
+
+.emptyState {
+  display: grid;
+  justify-items: center;
+  gap: $space-sm;
+  padding: $space-2xl $space-lg;
+
+  color: $color-text-secondary;
+  text-align: center;
+
+  background: $color-bg-elevated;
+  border: 1px dashed $color-border-strong;
+  border-radius: $radius-xl;
+
+  svg {
+    width: 2rem;
+    height: 2rem;
+    color: $color-accent-secondary;
+  }
+
+  h3 {
+    color: $color-text-primary;
+    font-size: $font-size-heading-sm;
+  }
+
+  p {
+    max-width: 560px;
+  }
+}
+
+.placeList {
+  display: grid;
+  gap: $space-md;
+}
+
+.placeSection {
+  overflow: hidden;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-sm;
+}
+
+.placeHeader {
+  padding: $space-md $space-lg;
+  background: $color-bg-elevated-2;
+  border-bottom: 1px solid $color-border;
+
+  > div {
+    display: flex;
+    align-items: center;
+    gap: $space-sm;
+  }
+
+  svg {
+    flex: 0 0 auto;
+    width: 1.15rem;
+    height: 1.15rem;
+    color: $color-accent-secondary;
+  }
+
+  h3 {
+    color: $color-text-primary;
+    font-size: $font-size-heading-sm;
+  }
+
+  p {
+    color: $color-text-muted;
+    font-size: $font-size-body-xs;
+  }
+}
+
+.itemsList {
+  display: grid;
+}
+
+.shoppingItem {
+  border-bottom: 1px solid $color-border;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.checkControl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: $space-sm;
+  align-items: center;
+  min-height: 58px;
+  padding: $space-sm $space-lg;
+
+  cursor: pointer;
+  transition: background 160ms ease;
+
+  &:hover {
+    background: $color-bg-elevated-2;
+  }
+
+  input {
+    width: 1.05rem;
+    height: 1.05rem;
+    accent-color: $color-accent-secondary;
+  }
+}
+
+.itemContent {
+  display: grid;
+  gap: $space-2xs;
+  min-width: 0;
+
+  strong {
+    overflow: hidden;
+    color: $color-text-primary;
+    font-size: $font-size-body-sm;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    overflow: hidden;
+    color: $color-text-muted;
+    font-size: $font-size-body-xs;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.quantity {
+  color: $color-text-primary;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+}
+
+.checkedItem {
+  .itemContent strong,
+  .quantity {
+    color: $color-text-muted;
+    text-decoration: line-through;
+  }
+
+  .itemContent small {
+    opacity: 0.7;
+  }
+}

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { FiCoffee, FiPackage, FiShoppingCart, FiUsers } from 'react-icons/fi';
 import DrinkPlansSection from '@/features/meals/components/DrinkPlansSection';
@@ -6,11 +6,13 @@ import FoodExtrasSection from '@/features/meals/components/FoodExtrasSection';
 import MealCatalogSection from '@/features/meals/components/MealCatalogSection';
 import MealPlanSection from '@/features/meals/components/MealPlanSection';
 import { useMealModuleData } from '@/features/meals/hooks/useMealModuleData';
+import { reconcileTripMealLibraryAccess } from '@/features/meals/services/mealService';
 import { useRecipeLibrary } from '@/features/meals/hooks/useRecipeLibrary';
 import { collectPurchasePlaces } from '@/features/meals/utils/mealUtils';
 import { useAuth } from '@/hooks/useAuth';
 import { getGroupMembers } from '@/services/firebase/groupService';
 import { getTripDaysCount, getTripMealSlots } from '@/utils/tripUtils';
+import { getTripRegisteredUserIds } from '@/utils/sharedLibraryUtils';
 import styles from './MealsPage.module.scss';
 
 function MealsPage() {
@@ -24,6 +26,7 @@ function MealsPage() {
   } = useRecipeLibrary(currentUser?.uid);
 
   const members = useMemo(() => getGroupMembers(group), [group]);
+  const sharedUserIds = useMemo(() => getTripRegisteredUserIds(group), [group]);
   const tripDaysCount = getTripDaysCount(group.startDate, group.endDate);
   const slots = useMemo(
     () =>
@@ -43,6 +46,29 @@ function MealsPage() {
 
   const plannedSlots = slots.filter((slot) => mealPlan.some((plan) => plan.id === slot.id)).length;
 
+  useEffect(() => {
+    if (libraryLoading || !currentUser?.uid || meals.length === 0) {
+      return;
+    }
+
+    reconcileTripMealLibraryAccess({
+      groupId: group.id,
+      meals,
+      libraryRecipes,
+      currentUserUid: currentUser.uid,
+      accessUserIds: sharedUserIds,
+    }).catch((err) => {
+      console.error('No se pudo sincronizar el acceso a las recetas compartidas:', err);
+    });
+  }, [
+    group.id,
+    meals,
+    libraryRecipes,
+    libraryLoading,
+    currentUser?.uid,
+    sharedUserIds,
+  ]);
+
   return (
     <div className={styles.page}>
       <section className={styles.hero}>
@@ -50,7 +76,7 @@ function MealsPage() {
           <p className={styles.eyebrow}>Comidas</p>
           <h2>Plan alimentario del viaje</h2>
           <p>
-            Organizá el calendario, importá recetas de tu biblioteca, agregá extras y calculá bebidas. Los lugares de compra quedan preparados para ordenar Compras.
+            Organizá el calendario, importá recetas compartidas, agregá extras y calculá bebidas. Los lugares de compra quedan preparados para ordenar Compras.
           </p>
         </div>
       </section>
@@ -79,7 +105,7 @@ function MealsPage() {
           <div>
             <span>Comidas del viaje</span>
             <strong>{meals.length}</strong>
-            <small>{libraryRecipes.length} disponibles en tu biblioteca</small>
+            <small>{libraryRecipes.length} disponibles en la biblioteca</small>
           </div>
         </article>
 
@@ -111,6 +137,7 @@ function MealsPage() {
         mealPlan={mealPlan}
         participantCount={members.length}
         currentUserUid={currentUser.uid}
+        sharedUserIds={sharedUserIds}
         libraryRecipes={libraryRecipes}
         libraryLoading={libraryLoading}
         purchasePlaceSuggestions={purchasePlaceSuggestions}

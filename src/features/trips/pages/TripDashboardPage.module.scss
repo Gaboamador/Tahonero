@@ -15,7 +15,8 @@
 }
 
 .summaryCard,
-.modulesSection {
+.statusSection,
+.alertsSection {
   background: $color-bg-elevated;
   border: 1px solid $color-border;
   border-radius: $radius-xl;
@@ -64,7 +65,8 @@
   }
 }
 
-.modulesSection {
+.statusSection,
+.alertsSection {
   display: grid;
   gap: $space-md;
   padding: $space-lg;
@@ -88,7 +90,7 @@
   }
 
   > p {
-    max-width: 520px;
+    max-width: 560px;
     color: $color-text-secondary;
     font-size: $font-size-body-sm;
   }
@@ -104,7 +106,7 @@
   text-transform: uppercase;
 }
 
-.modulesGrid {
+.statusGrid {
   display: grid;
   gap: $space-sm;
 
@@ -113,15 +115,13 @@
   }
 }
 
-.moduleCard {
-  position: relative;
-
+.statusCard {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: $space-sm;
-  align-items: flex-start;
+  align-items: center;
 
-  min-height: 150px;
+  min-height: 118px;
   padding: $space-md;
 
   color: inherit;
@@ -132,17 +132,17 @@
 
   transition:
     border-color 160ms ease,
-    transform 160ms ease,
-    background 160ms ease;
+    background 160ms ease,
+    transform 160ms ease;
 
-  &:not(.disabledModule):hover {
+  &:hover {
     border-color: rgba($color-accent-primary, 0.38);
     background: rgba($color-accent-primary, 0.05);
     transform: translateY(-1px);
   }
 }
 
-.moduleIcon {
+.statusIcon {
   display: grid;
   width: 42px;
   height: 42px;
@@ -160,14 +160,86 @@
   }
 }
 
-.moduleContent {
+.statusContent {
   display: grid;
-  gap: $space-xs;
+  gap: $space-2xs;
   min-width: 0;
 
-  h3 {
+  strong {
     color: $color-text-primary;
     font-size: $font-size-heading-sm;
+    line-height: 1.2;
+  }
+
+  small {
+    color: $color-text-muted;
+    font-size: $font-size-body-xs;
+  }
+}
+
+.statusLabel {
+  color: $color-text-secondary;
+  font-size: $font-size-label-sm;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.statusArrow {
+  color: $color-text-muted;
+}
+
+.alertsLoading {
+  padding: $space-md;
+
+  color: $color-text-secondary;
+  font-size: $font-size-body-sm;
+  text-align: center;
+
+  background: $color-bg-elevated-2;
+  border: 1px dashed $color-border-strong;
+  border-radius: $radius-lg;
+}
+
+.dataWarning,
+.allGood {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-sm;
+  padding: $space-md;
+  border-radius: $radius-lg;
+
+  > svg {
+    flex: 0 0 auto;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 0.05rem;
+  }
+}
+
+.dataWarning {
+  color: $color-danger;
+  background: rgba($color-danger, 0.08);
+  border: 1px solid rgba($color-danger, 0.22);
+
+  p {
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+  }
+}
+
+.allGood {
+  color: $color-success;
+  background: rgba($color-success, 0.08);
+  border: 1px solid rgba($color-success, 0.22);
+
+  div {
+    display: grid;
+    gap: $space-2xs;
+  }
+
+  strong {
+    color: $color-text-primary;
   }
 
   p {
@@ -176,33 +248,95 @@
   }
 }
 
-.availableBadge,
-.soonBadge {
-  justify-self: start;
-  padding: $space-2xs $space-xs;
-
-  font-size: $font-size-label-xs;
-  font-weight: $font-weight-bold;
-
-  border-radius: $radius-pill;
+.alertsList {
+  display: grid;
+  gap: $space-sm;
 }
 
-.availableBadge {
-  color: $color-success;
-  background: rgba($color-success, 0.1);
-}
-
-.soonBadge {
-  color: $color-text-muted;
-  background: rgba($color-text-muted, 0.1);
-}
-
-.moduleArrow {
-  align-self: center;
-  color: $color-text-muted;
-}
-
-.disabledModule {
+.alertCard {
+  display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  opacity: 0.72;
+  gap: $space-sm;
+  align-items: flex-start;
+
+  padding: $space-md;
+
+  color: inherit;
+
+  background: rgba($color-accent-primary, 0.04);
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: rgba($color-accent-primary, 0.34);
+    background: rgba($color-accent-primary, 0.07);
+    transform: translateY(-1px);
+  }
+
+  @media (min-width: 680px) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
+.alertIcon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+
+  color: $color-accent-primary;
+
+  background: rgba($color-accent-primary, 0.1);
+  border-radius: $radius-lg;
+
+  place-items: center;
+
+  svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+}
+
+.alertContent {
+  display: grid;
+  gap: $space-2xs;
+  min-width: 0;
+
+  strong {
+    color: $color-text-primary;
+    font-size: $font-size-body-sm;
+  }
+
+  p {
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+  }
+}
+
+.alertAction {
+  display: inline-flex;
+  grid-column: 2 / -1;
+  align-items: center;
+  justify-self: start;
+  gap: $space-2xs;
+
+  color: $color-accent-primary;
+  font-size: $font-size-label-sm;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+
+  @media (min-width: 680px) {
+    grid-column: auto;
+    justify-self: end;
+  }
+
+  svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
 }

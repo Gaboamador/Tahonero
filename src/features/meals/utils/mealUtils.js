@@ -6,6 +6,16 @@ export function createLocalId(prefix = 'item') {
   return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
+export function createEmptyIngredient() {
+  return {
+    id: createLocalId('ingredient'),
+    name: '',
+    quantity: '',
+    unit: 'g',
+    purchasePlace: '',
+  };
+}
+
 export function parseFoodQuantity(value) {
   const parsed = Number(String(value ?? '').trim().replace(',', '.'));
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;

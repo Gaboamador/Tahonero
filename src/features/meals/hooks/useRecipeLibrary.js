@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
-import { subscribeToRecipeLibrary } from '@/features/meals/services/recipeLibraryService';
+import {
+  migrateLegacyRecipeLibrary,
+  subscribeToRecipeLibrary,
+} from '@/features/meals/services/recipeLibraryService';
 
 export function useRecipeLibrary(userUid) {
   const [recipes, setRecipes] = useState([]);
@@ -14,22 +17,46 @@ export function useRecipeLibrary(userUid) {
       return undefined;
     }
 
+    let unsubscribe = () => {};
+    let cancelled = false;
+
     setIsLoading(true);
     setError('');
 
-    return subscribeToRecipeLibrary(
-      userUid,
-      (items) => {
-        setRecipes(items);
-        setIsLoading(false);
-      },
-      (err) => {
-        console.error('No se pudo cargar la biblioteca de comidas:', err);
-        setRecipes([]);
-        setError('No se pudo cargar la biblioteca de comidas.');
-        setIsLoading(false);
-      },
-    );
+    const start = async () => {
+      try {
+        await migrateLegacyRecipeLibrary(userUid);
+        if (cancelled) return;
+
+        unsubscribe = subscribeToRecipeLibrary(
+          userUid,
+          (items) => {
+            setRecipes(items);
+            setIsLoading(false);
+          },
+          (err) => {
+            console.error('No se pudo cargar la biblioteca de comidas:', err);
+            setRecipes([]);
+            setError('No se pudo cargar la biblioteca de comidas.');
+            setIsLoading(false);
+          },
+        );
+      } catch (err) {
+        console.error('No se pudo migrar/cargar la biblioteca de comidas:', err);
+        if (!cancelled) {
+          setRecipes([]);
+          setError('No se pudo cargar la biblioteca de comidas.');
+          setIsLoading(false);
+        }
+      }
+    };
+
+    start();
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [userUid]);
 
   return { recipes, isLoading, error };

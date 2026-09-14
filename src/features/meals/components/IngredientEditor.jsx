@@ -1,21 +1,31 @@
+import { useEffect, useRef, useState } from 'react';
 import { FiPlus, FiTrash2 } from 'react-icons/fi';
 import { FOOD_UNITS } from '@/features/meals/constants/mealConstants';
 import PurchasePlaceInput from '@/features/meals/components/PurchasePlaceInput';
-import { createLocalId } from '@/features/meals/utils/mealUtils';
+import { createEmptyIngredient } from '@/features/meals/utils/mealUtils';
 import styles from './MealsModule.module.scss';
 
 function IngredientEditor({ ingredients, onChange, purchasePlaceSuggestions = [] }) {
+  const nameInputRefs = useRef(new Map());
+  const [pendingFocusId, setPendingFocusId] = useState('');
+
+  useEffect(() => {
+    if (!pendingFocusId) {
+      return;
+    }
+
+    const input = nameInputRefs.current.get(pendingFocusId);
+
+    if (input) {
+      input.focus();
+      setPendingFocusId('');
+    }
+  }, [ingredients, pendingFocusId]);
+
   const handleAdd = () => {
-    onChange([
-      ...ingredients,
-      {
-        id: createLocalId('ingredient'),
-        name: '',
-        quantity: '',
-        unit: 'g',
-        purchasePlace: '',
-      },
-    ]);
+    const ingredient = createEmptyIngredient();
+    onChange([...ingredients, ingredient]);
+    setPendingFocusId(ingredient.id);
   };
 
   const handleChange = (ingredientId, field, value) => {
@@ -37,11 +47,6 @@ function IngredientEditor({ ingredients, onChange, purchasePlaceSuggestions = []
           <strong>Ingredientes</strong>
           <span>Opcionales. Podés indicar también dónde se compra cada ingrediente.</span>
         </div>
-
-        <button type="button" className={styles.secondaryButton} onClick={handleAdd}>
-          <FiPlus aria-hidden="true" />
-          Agregar ingrediente
-        </button>
       </div>
 
       {ingredients.length === 0 ? (
@@ -50,9 +55,16 @@ function IngredientEditor({ ingredients, onChange, purchasePlaceSuggestions = []
         <div className={styles.ingredientRows}>
           {ingredients.map((ingredient) => (
             <div key={ingredient.id} className={styles.ingredientRow}>
-              <label className={styles.field}>
+              <label className={`${styles.field} ${styles.ingredientNameField}`}>
                 <span>Ingrediente</span>
                 <input
+                  ref={(node) => {
+                    if (node) {
+                      nameInputRefs.current.set(ingredient.id, node);
+                    } else {
+                      nameInputRefs.current.delete(ingredient.id);
+                    }
+                  }}
                   type="text"
                   value={ingredient.name}
                   placeholder="Ej: Harina"
@@ -60,7 +72,7 @@ function IngredientEditor({ ingredients, onChange, purchasePlaceSuggestions = []
                 />
               </label>
 
-              <label className={styles.field}>
+              <label className={`${styles.field} ${styles.ingredientQuantityField}`}>
                 <span>Cantidad</span>
                 <input
                   type="text"
@@ -71,7 +83,7 @@ function IngredientEditor({ ingredients, onChange, purchasePlaceSuggestions = []
                 />
               </label>
 
-              <label className={styles.field}>
+              <label className={`${styles.field} ${styles.ingredientUnitField}`}>
                 <span>Unidad</span>
                 <select
                   value={ingredient.unit}
@@ -89,11 +101,12 @@ function IngredientEditor({ ingredients, onChange, purchasePlaceSuggestions = []
                 value={ingredient.purchasePlace || ''}
                 onChange={(value) => handleChange(ingredient.id, 'purchasePlace', value)}
                 suggestions={purchasePlaceSuggestions}
+                className={styles.ingredientPlaceField}
               />
 
               <button
                 type="button"
-                className={styles.iconDangerButton}
+                className={`${styles.iconDangerButton} ${styles.ingredientDeleteButton}`}
                 onClick={() => handleRemove(ingredient.id)}
                 aria-label={`Eliminar ingrediente ${ingredient.name || ''}`}
               >
@@ -103,6 +116,11 @@ function IngredientEditor({ ingredients, onChange, purchasePlaceSuggestions = []
           ))}
         </div>
       )}
+
+      <button type="button" className={styles.addIngredientButton} onClick={handleAdd}>
+        <FiPlus aria-hidden="true" />
+        Agregar ingrediente
+      </button>
     </div>
   );
 }

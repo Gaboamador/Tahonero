@@ -11,6 +11,7 @@ import {
 } from '@/features/meals/services/recipeLibraryService';
 import {
   collectPurchasePlaces,
+  createEmptyIngredient,
   createLocalId,
   formatFoodQuantity,
 } from '@/features/meals/utils/mealUtils';
@@ -21,7 +22,7 @@ function createEmptyForm() {
   return {
     name: '',
     servings: '1',
-    ingredients: [],
+    ingredients: [createEmptyIngredient()],
   };
 }
 
@@ -48,12 +49,15 @@ function RecipeLibraryPage() {
     setFormData({
       name: recipe.name || '',
       servings: String(recipe.servings || 1),
-      ingredients: (recipe.ingredients || []).map((ingredient) => ({
-        ...ingredient,
-        id: ingredient.id || createLocalId('ingredient'),
-        quantity: String(ingredient.quantity ?? ''),
-        purchasePlace: ingredient.purchasePlace || '',
-      })),
+      ingredients:
+        (recipe.ingredients || []).length > 0
+          ? recipe.ingredients.map((ingredient) => ({
+              ...ingredient,
+              id: ingredient.id || createLocalId('ingredient'),
+              quantity: String(ingredient.quantity ?? ''),
+              purchasePlace: ingredient.purchasePlace || '',
+            }))
+          : [createEmptyIngredient()],
     });
     setError('');
     setIsFormOpen(true);
@@ -67,7 +71,6 @@ function RecipeLibraryPage() {
     try {
       if (editingRecipeId) {
         await updateLibraryRecipe({
-          userUid: currentUser.uid,
           recipeId: editingRecipeId,
           ...formData,
         });
@@ -88,14 +91,14 @@ function RecipeLibraryPage() {
   };
 
   const handleDelete = async (recipe) => {
-    if (!window.confirm(`¿Borrar "${recipe.name}" de tu biblioteca? Los viajes que ya la importaron no se modifican.`)) {
+    if (!window.confirm(`¿Borrar "${recipe.name}" de la biblioteca compartida? Los viajes que ya la importaron no se modifican.`)) {
       return;
     }
 
     setError('');
 
     try {
-      await deleteLibraryRecipe({ userUid: currentUser.uid, recipeId: recipe.id });
+      await deleteLibraryRecipe({ userUid: currentUser.uid, recipe });
     } catch (err) {
       console.error(err);
       setError(err.message || 'No se pudo borrar la receta.');
@@ -111,10 +114,10 @@ function RecipeLibraryPage() {
 
       <div className={styles.hero}>
         <div>
-          <p className={styles.eyebrow}>Biblioteca personal</p>
+          <p className={styles.eyebrow}>Biblioteca compartida</p>
           <h1>Comidas guardadas</h1>
           <p>
-            Guardá recetas para reutilizarlas en distintos viajes. Al importarlas, cada viaje recibe una copia independiente.
+            Las recetas se comparten con las personas con las que las usás en un viaje. Al importarlas, cada viaje recibe una copia independiente.
           </p>
         </div>
 
@@ -176,7 +179,7 @@ function RecipeLibraryPage() {
 
           <div className={moduleStyles.formActions}>
             <button type="submit" className={moduleStyles.primaryButton} disabled={isSubmitting}>
-              {isSubmitting ? 'Guardando...' : editingRecipeId ? 'Guardar cambios' : 'Guardar en biblioteca'}
+              {isSubmitting ? 'Guardando...' : editingRecipeId ? 'Guardar cambios' : 'Guardar receta'}
             </button>
             <button type="button" className={moduleStyles.secondaryButton} onClick={resetForm} disabled={isSubmitting}>
               Cancelar
@@ -189,8 +192,8 @@ function RecipeLibraryPage() {
 
       {!isLoading && recipes.length === 0 ? (
         <div className={moduleStyles.emptyState}>
-          <strong>Todavía no guardaste comidas.</strong>
-          <span>Las que guardes acá van a poder importarse en cualquier viaje.</span>
+          <strong>Todavía no tenés comidas disponibles.</strong>
+          <span>Las recetas que crees o recibas al compartir un viaje van a poder reutilizarse en viajes futuros.</span>
         </div>
       ) : null}
 
@@ -206,6 +209,7 @@ function RecipeLibraryPage() {
                     <span className={moduleStyles.metaBadge}>
                       {(recipe.ingredients || []).length} {(recipe.ingredients || []).length === 1 ? 'ingrediente' : 'ingredientes'}
                     </span>
+                    <span className={moduleStyles.metaBadge}>Compartida con {(recipe.accessUserIds || []).length || 1}</span>
                   </div>
                 </div>
 
@@ -213,9 +217,11 @@ function RecipeLibraryPage() {
                   <button type="button" className={moduleStyles.iconButton} onClick={() => handleEdit(recipe)} aria-label={`Editar ${recipe.name}`}>
                     <FiEdit2 aria-hidden="true" />
                   </button>
-                  <button type="button" className={moduleStyles.iconDangerButton} onClick={() => handleDelete(recipe)} aria-label={`Borrar ${recipe.name}`}>
-                    <FiTrash2 aria-hidden="true" />
-                  </button>
+                  {recipe.createdBy === currentUser.uid && (recipe.accessUserIds || []).length <= 1 ? (
+                    <button type="button" className={moduleStyles.iconDangerButton} onClick={() => handleDelete(recipe)} aria-label={`Borrar ${recipe.name}`}>
+                      <FiTrash2 aria-hidden="true" />
+                    </button>
+                  ) : null}
                 </div>
               </div>
 

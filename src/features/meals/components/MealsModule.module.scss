@@ -244,7 +244,12 @@
 
 .ingredientRow {
   display: grid;
-  gap: $space-sm;
+  grid-template-columns: minmax(0, 1fr) minmax(110px, 0.75fr) auto;
+  grid-template-areas:
+    "name name delete"
+    "quantity unit delete"
+    "place place delete";
+  gap: $space-xs $space-sm;
   align-items: end;
   padding: $space-sm;
 
@@ -254,6 +259,59 @@
 
   @media (min-width: 720px) {
     grid-template-columns: minmax(0, 1.4fr) minmax(90px, 0.55fr) minmax(110px, 0.6fr) minmax(0, 1.1fr) auto;
+    grid-template-areas: "name quantity unit place delete";
+    gap: $space-sm;
+  }
+}
+
+.ingredientNameField {
+  grid-area: name;
+}
+
+.ingredientQuantityField {
+  grid-area: quantity;
+}
+
+.ingredientUnitField {
+  grid-area: unit;
+}
+
+.ingredientPlaceField {
+  grid-area: place;
+}
+
+.ingredientDeleteButton {
+  grid-area: delete;
+  align-self: center;
+}
+
+.addIngredientButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  gap: $space-xs;
+
+  min-height: 40px;
+  padding: $space-xs $space-md;
+
+  color: $color-accent-primary;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-bold;
+
+  background: rgba($color-accent-primary, 0.08);
+  border: 1px solid rgba($color-accent-primary, 0.2);
+  border-radius: $radius-md;
+
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+
+  &:hover {
+    background: rgba($color-accent-primary, 0.13);
+    border-color: rgba($color-accent-primary, 0.32);
+    transform: translateY(-1px);
   }
 }
 

@@ -288,6 +288,7 @@ service cloud.firestore {
           "ingredients",
           "sourceRecipeId",
           "sourceRecipeOwnerUid",
+          "sourceRecipeScope",
           "createdBy",
           "createdAt",
           "updatedAt"
@@ -313,6 +314,10 @@ service cloud.firestore {
             && request.resource.data.sourceRecipeId.size() > 0
             && request.resource.data.sourceRecipeOwnerUid is string
             && request.resource.data.sourceRecipeOwnerUid.size() > 0
+            && (
+              !request.resource.data.keys().hasAny(["sourceRecipeScope"])
+              || request.resource.data.sourceRecipeScope == "shared"
+            )
           )
         )
         && request.resource.data.createdBy is string;
@@ -461,6 +466,265 @@ service cloud.firestore {
         );
     }
 
+    function isTripOwnerById(groupId) {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/groups/$(groupId)).data.createdBy == request.auth.uid;
+    }
+
+    function canManageEmpanadaOrder(groupId, memberId) {
+      let groupData = get(/databases/$(database)/documents/groups/$(groupId)).data;
+      return isSignedIn()
+        && request.auth.uid in groupData.memberIds
+        && groupData.membersMap.keys().hasAny([memberId])
+        && (
+          groupData.membersMap[memberId].uid == request.auth.uid
+          || (
+            groupData.membersMap[memberId].keys().hasAny(["userUid"])
+            && groupData.membersMap[memberId].userUid == request.auth.uid
+          )
+          || (
+            groupData.createdBy == request.auth.uid
+            && groupData.membersMap[memberId].type == "manual"
+          )
+        );
+    }
+
+    function isValidEmpanadaVendor() {
+      return request.resource.data.keys().hasOnly([
+          "name",
+          "flavors",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "name",
+          "flavors",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.flavors is list
+        && request.resource.data.flavors.size() > 0
+        && request.resource.data.createdBy is string;
+    }
+
+    function sharedLibraryImmutableFieldsAreUnchanged() {
+      return request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function sharedAccessIsValid() {
+      return request.resource.data.accessUserIds is list
+        && request.resource.data.accessUserIds.size() > 0
+        && request.auth.uid in request.resource.data.accessUserIds;
+    }
+
+    function sharedAccessOnlyExpands() {
+      return request.resource.data.accessUserIds.hasAll(resource.data.accessUserIds);
+    }
+
+    function isValidSharedRecipe() {
+      return request.resource.data.keys().hasOnly([
+          "name",
+          "servings",
+          "ingredients",
+          "createdBy",
+          "accessUserIds",
+          "legacyOwnerUid",
+          "legacyRecipeId",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "name",
+          "servings",
+          "ingredients",
+          "createdBy",
+          "accessUserIds",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.servings is int
+        && request.resource.data.servings > 0
+        && request.resource.data.ingredients is list
+        && request.resource.data.createdBy is string
+        && request.resource.data.accessUserIds is list
+        && request.resource.data.accessUserIds.size() > 0
+        && (
+          !request.resource.data.keys().hasAny(["legacyOwnerUid", "legacyRecipeId"])
+          || (
+            request.resource.data.keys().hasAll(["legacyOwnerUid", "legacyRecipeId"])
+            && request.resource.data.legacyOwnerUid is string
+            && request.resource.data.legacyOwnerUid.size() > 0
+            && request.resource.data.legacyRecipeId is string
+            && request.resource.data.legacyRecipeId.size() > 0
+          )
+        );
+    }
+
+    function isValidSharedEmpanadaVendor() {
+      return request.resource.data.keys().hasOnly([
+          "name",
+          "flavors",
+          "createdBy",
+          "accessUserIds",
+          "legacyOwnerUid",
+          "legacyVendorId",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "name",
+          "flavors",
+          "createdBy",
+          "accessUserIds",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.flavors is list
+        && request.resource.data.flavors.size() > 0
+        && request.resource.data.createdBy is string
+        && request.resource.data.accessUserIds is list
+        && request.resource.data.accessUserIds.size() > 0
+        && (
+          !request.resource.data.keys().hasAny(["legacyOwnerUid", "legacyVendorId"])
+          || (
+            request.resource.data.keys().hasAll(["legacyOwnerUid", "legacyVendorId"])
+            && request.resource.data.legacyOwnerUid is string
+            && request.resource.data.legacyOwnerUid.size() > 0
+            && request.resource.data.legacyVendorId is string
+            && request.resource.data.legacyVendorId.size() > 0
+          )
+        );
+    }
+
+    function isValidEmpanadaConfig() {
+      return request.resource.data.keys().hasOnly([
+          "vendorName",
+          "sourceVendorId",
+          "sourceVendorOwnerUid",
+          "sourceVendorScope",
+          "flavors",
+          "mealSlotIds",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "vendorName",
+          "sourceVendorId",
+          "sourceVendorOwnerUid",
+          "flavors",
+          "mealSlotIds",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.vendorName is string
+        && request.resource.data.vendorName.size() > 0
+        && request.resource.data.sourceVendorId is string
+        && request.resource.data.sourceVendorId.size() > 0
+        && request.resource.data.sourceVendorOwnerUid is string
+        && (
+          !request.resource.data.keys().hasAny(["sourceVendorScope"])
+          || request.resource.data.sourceVendorScope == "shared"
+        )
+        && request.resource.data.flavors is list
+        && request.resource.data.flavors.size() > 0
+        && request.resource.data.mealSlotIds is list
+        && request.resource.data.createdBy is string;
+    }
+
+    function isValidEmpanadaOrder(memberId) {
+      return request.resource.data.keys().hasOnly([
+          "memberId",
+          "items",
+          "allocations",
+          "consumed",
+          "isFinalized",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "memberId",
+          "items",
+          "allocations",
+          "consumed",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ])
+        && request.resource.data.memberId == memberId
+        && request.resource.data.items is map
+        && request.resource.data.allocations is map
+        && request.resource.data.consumed is map
+        && (
+          !request.resource.data.keys().hasAny(["isFinalized"])
+          || request.resource.data.isFinalized is bool
+        )
+        && request.resource.data.createdBy is string
+        && request.resource.data.updatedBy == request.auth.uid;
+    }
+
+    function empanadaImmutableFieldsAreUnchanged() {
+      return request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    match /recipes/{recipeId} {
+      allow read: if isSignedIn()
+        && request.auth.uid in resource.data.accessUserIds;
+
+      allow create: if isSignedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && sharedAccessIsValid()
+        && isValidSharedRecipe();
+
+      allow update: if isSignedIn()
+        && request.auth.uid in resource.data.accessUserIds
+        && sharedLibraryImmutableFieldsAreUnchanged()
+        && sharedAccessIsValid()
+        && sharedAccessOnlyExpands()
+        && isValidSharedRecipe();
+
+      allow delete: if isSignedIn()
+        && resource.data.createdBy == request.auth.uid
+        && resource.data.accessUserIds.size() == 1
+        && request.auth.uid in resource.data.accessUserIds;
+    }
+
+    match /empanadaVendors/{vendorId} {
+      allow read: if isSignedIn()
+        && request.auth.uid in resource.data.accessUserIds;
+
+      allow create: if isSignedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && sharedAccessIsValid()
+        && isValidSharedEmpanadaVendor();
+
+      allow update: if isSignedIn()
+        && request.auth.uid in resource.data.accessUserIds
+        && sharedLibraryImmutableFieldsAreUnchanged()
+        && sharedAccessIsValid()
+        && sharedAccessOnlyExpands()
+        && isValidSharedEmpanadaVendor();
+
+      allow delete: if isSignedIn()
+        && resource.data.createdBy == request.auth.uid
+        && resource.data.accessUserIds.size() == 1
+        && request.auth.uid in resource.data.accessUserIds;
+    }
+
     match /users/{userId} {
       allow read: if isSelf(userId);
 
@@ -468,6 +732,17 @@ service cloud.firestore {
         && userProfileHasValidShape();
 
       allow delete: if false;
+
+      match /empanadaVendors/{vendorId} {
+        allow read: if isSelf(userId);
+        allow create: if isSelf(userId)
+          && request.resource.data.createdBy == request.auth.uid
+          && isValidEmpanadaVendor();
+        allow update: if isSelf(userId)
+          && empanadaImmutableFieldsAreUnchanged()
+          && isValidEmpanadaVendor();
+        allow delete: if isSelf(userId);
+      }
 
       match /recipes/{recipeId} {
         allow read: if isSelf(userId);
@@ -553,6 +828,46 @@ service cloud.firestore {
         allow update: if isGroupMember(groupId)
           && foodItemImmutableFieldsAreUnchanged()
           && isValidDrinkPlan();
+        allow delete: if isGroupMember(groupId);
+      }
+
+      match /empanadaConfig/{configId} {
+        allow read: if isGroupMember(groupId);
+        allow create: if configId == "main"
+          && isTripOwnerById(groupId)
+          && request.resource.data.createdBy == request.auth.uid
+          && isValidEmpanadaConfig();
+        allow update: if configId == "main"
+          && isTripOwnerById(groupId)
+          && empanadaImmutableFieldsAreUnchanged()
+          && isValidEmpanadaConfig();
+        allow delete: if configId == "main" && isTripOwnerById(groupId);
+      }
+
+      match /empanadaOrders/{memberId} {
+        allow read: if isGroupMember(groupId);
+        allow create: if canManageEmpanadaOrder(groupId, memberId)
+          && request.resource.data.createdBy == request.auth.uid
+          && isValidEmpanadaOrder(memberId);
+        allow update: if canManageEmpanadaOrder(groupId, memberId)
+          && empanadaImmutableFieldsAreUnchanged()
+          && isValidEmpanadaOrder(memberId);
+        allow delete: if canManageEmpanadaOrder(groupId, memberId);
+      }
+
+      match /shoppingState/{itemKey} {
+        allow read: if isGroupMember(groupId);
+        allow create, update: if isGroupMember(groupId)
+          && request.resource.data.keys().hasOnly([
+            "checked",
+            "signature",
+            "updatedBy",
+            "updatedAt"
+          ])
+          && request.resource.data.checked == true
+          && request.resource.data.signature is string
+          && request.resource.data.signature.size() > 0
+          && request.resource.data.updatedBy == request.auth.uid;
         allow delete: if isGroupMember(groupId);
       }
     }

@@ -8,7 +8,7 @@ import {
   deleteFoodExtra,
   updateFoodExtra,
 } from '@/features/meals/services/mealService';
-import { createLocalId, formatFoodQuantity } from '@/features/meals/utils/mealUtils';
+import { createEmptyIngredient, createLocalId, formatFoodQuantity } from '@/features/meals/utils/mealUtils';
 import styles from './MealsModule.module.scss';
 
 function createEmptyForm() {
@@ -49,12 +49,17 @@ function FoodExtrasSection({
       quantity: extra.quantity ? String(extra.quantity) : '',
       unit: extra.unit || 'unidad',
       purchasePlace: extra.purchasePlace || '',
-      ingredients: (extra.ingredients || []).map((ingredient) => ({
-        ...ingredient,
-        id: ingredient.id || createLocalId('ingredient'),
-        quantity: String(ingredient.quantity ?? ''),
-        purchasePlace: ingredient.purchasePlace || '',
-      })),
+      ingredients:
+        extra.mode === EXTRA_MODES.recipe
+          ? (extra.ingredients || []).length > 0
+            ? extra.ingredients.map((ingredient) => ({
+                ...ingredient,
+                id: ingredient.id || createLocalId('ingredient'),
+                quantity: String(ingredient.quantity ?? ''),
+                purchasePlace: ingredient.purchasePlace || '',
+              }))
+            : [createEmptyIngredient()]
+          : [],
     });
     setError('');
     setIsFormOpen(true);
@@ -156,7 +161,10 @@ function FoodExtrasSection({
                     mode: event.target.value,
                     quantity: '',
                     purchasePlace: '',
-                    ingredients: [],
+                    ingredients:
+                      event.target.value === EXTRA_MODES.recipe
+                        ? [createEmptyIngredient()]
+                        : [],
                   }))
                 }
               >

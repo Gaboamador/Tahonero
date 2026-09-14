@@ -121,6 +121,7 @@
 .heroActions {
   display: flex;
   flex-direction: column;
+  flex-wrap: wrap;
   gap: $space-sm;
 
   @media (min-width: 520px) {

@@ -5,7 +5,9 @@ import {
   FiCoffee,
   FiDollarSign,
   FiHome,
+  FiPackage,
   FiSettings,
+  FiShoppingCart,
   FiUsers,
 } from 'react-icons/fi';
 import { useAuth } from '@/hooks/useAuth';
@@ -104,6 +106,22 @@ function TripLayout() {
         >
           <FiCoffee aria-hidden="true" />
           Comidas
+        </NavLink>
+
+        <NavLink
+          to={`/viajes/${group.id}/compras`}
+          className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
+        >
+          <FiShoppingCart aria-hidden="true" />
+          Compras
+        </NavLink>
+
+        <NavLink
+          to={`/viajes/${group.id}/empanadas`}
+          className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
+        >
+          <FiPackage aria-hidden="true" />
+          Empanadas
         </NavLink>
 
         <NavLink

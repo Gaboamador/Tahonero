@@ -1,5 +1,6 @@
 import {
   addDoc,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -17,7 +18,9 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/services/firebase/firebaseConfig';
 import { FOOD_UNIT_VALUES } from '@/features/meals/constants/mealConstants';
-import { createLocalId, parseFoodQuantity } from '@/features/meals/utils/mealUtils';
+import { parseFoodQuantity } from '@/features/meals/utils/mealUtils';
+import { isBlankIngredient, normalizeIngredients, validateMealPayload } from '@/features/meals/services/mealValidation';
+import { uniqueUserIds } from '@/utils/sharedLibraryUtils';
 
 function getTripSubcollectionRef(groupId, collectionName) {
   return collection(db, 'groups', groupId, collectionName);
@@ -43,57 +46,14 @@ export function getDrinkPlansCollectionRef(groupId) {
   return getTripSubcollectionRef(groupId, 'drinkPlans');
 }
 
-export function normalizeIngredient(ingredient) {
-  const name = String(ingredient?.name || '').trim();
-  const quantity = parseFoodQuantity(ingredient?.quantity);
-  const unit = String(ingredient?.unit || '').trim();
-  const purchasePlace = String(ingredient?.purchasePlace || '').trim();
-
-  if (!name || quantity <= 0 || !FOOD_UNIT_VALUES.includes(unit)) {
-    return null;
-  }
-
-  return {
-    id: ingredient?.id || createLocalId('ingredient'),
-    name,
-    quantity,
-    unit,
-    purchasePlace,
-  };
-}
-
-function normalizeIngredients(ingredients = []) {
-  return ingredients.map(normalizeIngredient).filter(Boolean);
-}
-
 function validateGroupId(groupId) {
   if (!groupId) {
     throw new Error('Viaje inválido.');
   }
 }
 
-export function validateMealPayload({ name, servings, ingredients }) {
-  const cleanName = String(name || '').trim();
-  const parsedServings = Number(servings);
-  const cleanIngredients = normalizeIngredients(ingredients);
-
-  if (!cleanName) {
-    throw new Error('El nombre de la comida es obligatorio.');
-  }
-
-  if (!Number.isInteger(parsedServings) || parsedServings <= 0) {
-    throw new Error('Indicá para cuántas personas rinde la comida.');
-  }
-
-  if ((ingredients || []).length !== cleanIngredients.length) {
-    throw new Error('Revisá los ingredientes: todos necesitan nombre, cantidad y unidad.');
-  }
-
-  return {
-    name: cleanName,
-    servings: parsedServings,
-    ingredients: cleanIngredients,
-  };
+function getSharedRecipeRef(recipeId) {
+  return doc(db, 'recipes', recipeId);
 }
 
 export async function createMeal({
@@ -104,14 +64,20 @@ export async function createMeal({
   createdBy,
   sourceRecipeId = '',
   sourceRecipeOwnerUid = '',
+  sourceRecipeScope = '',
 }) {
   validateGroupId(groupId);
 
   const cleanPayload = validateMealPayload({ name, servings, ingredients });
+  const hasSource = Boolean(sourceRecipeId);
   const payload = {
     ...cleanPayload,
-    ...(sourceRecipeId && sourceRecipeOwnerUid
-      ? { sourceRecipeId, sourceRecipeOwnerUid }
+    ...(hasSource
+      ? {
+          sourceRecipeId,
+          sourceRecipeOwnerUid: sourceRecipeOwnerUid || createdBy,
+          sourceRecipeScope: sourceRecipeScope || 'shared',
+        }
       : {}),
     createdBy,
     createdAt: serverTimestamp(),
@@ -122,6 +88,43 @@ export async function createMeal({
   return { id: docRef.id, ...payload };
 }
 
+export async function importSharedRecipeToTrip({
+  groupId,
+  recipe,
+  createdBy,
+  accessUserIds = [],
+}) {
+  validateGroupId(groupId);
+  if (!recipe?.id || !createdBy) throw new Error('Receta o usuario inválido.');
+
+  const cleanPayload = validateMealPayload({
+    name: recipe.name,
+    servings: recipe.servings,
+    ingredients: recipe.ingredients || [],
+  });
+  const sharedUsers = uniqueUserIds([createdBy, ...(recipe.accessUserIds || []), ...accessUserIds]);
+  const recipeRef = getSharedRecipeRef(recipe.id);
+  const mealRef = doc(getMealsCollectionRef(groupId));
+  const batch = writeBatch(db);
+
+  batch.update(recipeRef, {
+    accessUserIds: arrayUnion(...sharedUsers),
+    updatedAt: serverTimestamp(),
+  });
+
+  batch.set(mealRef, {
+    ...cleanPayload,
+    sourceRecipeId: recipe.id,
+    sourceRecipeOwnerUid: recipe.createdBy || createdBy,
+    sourceRecipeScope: 'shared',
+    createdBy,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  await batch.commit();
+  return mealRef.id;
+}
 
 export async function createMealAndLibraryRecipe({
   groupId,
@@ -129,6 +132,7 @@ export async function createMealAndLibraryRecipe({
   servings,
   ingredients = [],
   createdBy,
+  accessUserIds = [],
 }) {
   validateGroupId(groupId);
 
@@ -137,13 +141,15 @@ export async function createMealAndLibraryRecipe({
   }
 
   const cleanPayload = validateMealPayload({ name, servings, ingredients });
-  const recipeRef = doc(collection(db, 'users', createdBy, 'recipes'));
+  const recipeRef = doc(collection(db, 'recipes'));
   const mealRef = doc(getMealsCollectionRef(groupId));
+  const sharedUsers = uniqueUserIds([createdBy, ...accessUserIds]);
   const batch = writeBatch(db);
 
   batch.set(recipeRef, {
     ...cleanPayload,
     createdBy,
+    accessUserIds: sharedUsers,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -152,6 +158,7 @@ export async function createMealAndLibraryRecipe({
     ...cleanPayload,
     sourceRecipeId: recipeRef.id,
     sourceRecipeOwnerUid: createdBy,
+    sourceRecipeScope: 'shared',
     createdBy,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -165,8 +172,12 @@ export async function createMealAndLibraryRecipe({
   };
 }
 
-
-export async function saveTripMealToLibrary({ groupId, meal, currentUserUid }) {
+export async function saveTripMealToLibrary({
+  groupId,
+  meal,
+  currentUserUid,
+  accessUserIds = [],
+}) {
   validateGroupId(groupId);
 
   if (!meal?.id || !currentUserUid) {
@@ -182,13 +193,15 @@ export async function saveTripMealToLibrary({ groupId, meal, currentUserUid }) {
     servings: meal.servings,
     ingredients: meal.ingredients || [],
   });
-  const recipeRef = doc(collection(db, 'users', currentUserUid, 'recipes'));
+  const recipeRef = doc(collection(db, 'recipes'));
   const mealRef = getTripSubdocumentRef(groupId, 'meals', meal.id);
+  const sharedUsers = uniqueUserIds([currentUserUid, ...accessUserIds]);
   const batch = writeBatch(db);
 
   batch.set(recipeRef, {
     ...cleanPayload,
     createdBy: currentUserUid,
+    accessUserIds: sharedUsers,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -196,12 +209,188 @@ export async function saveTripMealToLibrary({ groupId, meal, currentUserUid }) {
   batch.update(mealRef, {
     sourceRecipeId: recipeRef.id,
     sourceRecipeOwnerUid: currentUserUid,
+    sourceRecipeScope: 'shared',
     updatedAt: serverTimestamp(),
   });
 
   await batch.commit();
 
   return recipeRef.id;
+}
+
+export async function updateSharedRecipeFromTripMeal({
+  groupId,
+  meal,
+  currentUserUid,
+  accessUserIds = [],
+  existingSharedRecipe = null,
+}) {
+  validateGroupId(groupId);
+  if (!meal?.id || !meal.sourceRecipeId || !currentUserUid) {
+    throw new Error('Esta comida no está vinculada a una receta compartida.');
+  }
+
+  const cleanPayload = validateMealPayload({
+    name: meal.name,
+    servings: meal.servings,
+    ingredients: meal.ingredients || [],
+  });
+  const sharedUsers = uniqueUserIds([
+    currentUserUid,
+    meal.sourceRecipeOwnerUid,
+    ...accessUserIds,
+  ]);
+  const mealRef = getTripSubdocumentRef(groupId, 'meals', meal.id);
+  const batch = writeBatch(db);
+
+  let recipeRef;
+  let recipeOwnerUid;
+
+  if (existingSharedRecipe?.id) {
+    recipeRef = getSharedRecipeRef(existingSharedRecipe.id);
+    recipeOwnerUid = existingSharedRecipe.createdBy || currentUserUid;
+
+    batch.update(recipeRef, {
+      ...cleanPayload,
+      accessUserIds: arrayUnion(...sharedUsers),
+      updatedAt: serverTimestamp(),
+    });
+  } else {
+    recipeRef = doc(collection(db, 'recipes'));
+    recipeOwnerUid = currentUserUid;
+
+    batch.set(recipeRef, {
+      ...cleanPayload,
+      createdBy: currentUserUid,
+      accessUserIds: sharedUsers,
+      ...(meal.sourceRecipeOwnerUid && meal.sourceRecipeScope !== 'shared'
+        ? {
+            legacyOwnerUid: meal.sourceRecipeOwnerUid,
+            legacyRecipeId: meal.sourceRecipeId,
+          }
+        : {}),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  if (meal.sourceRecipeScope !== 'shared' || meal.sourceRecipeId !== recipeRef.id) {
+    batch.update(mealRef, {
+      sourceRecipeId: recipeRef.id,
+      sourceRecipeOwnerUid: recipeOwnerUid,
+      sourceRecipeScope: 'shared',
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  await batch.commit();
+  return recipeRef.id;
+}
+
+export async function reconcileTripMealLibraryAccess({
+  groupId,
+  meals = [],
+  libraryRecipes = [],
+  currentUserUid,
+  accessUserIds = [],
+}) {
+  validateGroupId(groupId);
+  if (!currentUserUid || meals.length === 0) return;
+
+  const baseSharedUsers = uniqueUserIds([currentUserUid, ...accessUserIds]);
+  const recipeById = Object.fromEntries(libraryRecipes.map((recipe) => [recipe.id, recipe]));
+  const promotedLegacyRecipes = new Map();
+  const batch = writeBatch(db);
+  let hasWrites = false;
+
+  for (const meal of meals) {
+    if (!meal.sourceRecipeId) continue;
+
+    const legacyKey =
+      meal.sourceRecipeScope !== 'shared' && meal.sourceRecipeOwnerUid
+        ? `${meal.sourceRecipeOwnerUid}:${meal.sourceRecipeId}`
+        : '';
+
+    let recipe = null;
+    if (meal.sourceRecipeScope === 'shared') {
+      recipe = recipeById[meal.sourceRecipeId] || null;
+    } else {
+      recipe =
+        libraryRecipes.find(
+          (item) =>
+            item.legacyOwnerUid === meal.sourceRecipeOwnerUid &&
+            item.legacyRecipeId === meal.sourceRecipeId,
+        ) || promotedLegacyRecipes.get(legacyKey) || null;
+    }
+
+    if (!recipe && legacyKey) {
+      const cleanPayload = validateMealPayload({
+        name: meal.name,
+        servings: meal.servings,
+        ingredients: meal.ingredients || [],
+      });
+      const recipeRef = doc(collection(db, 'recipes'));
+      const sharedUsers = uniqueUserIds([
+        ...baseSharedUsers,
+        meal.sourceRecipeOwnerUid,
+      ]);
+
+      recipe = {
+        id: recipeRef.id,
+        ...cleanPayload,
+        createdBy: currentUserUid,
+        accessUserIds: sharedUsers,
+        legacyOwnerUid: meal.sourceRecipeOwnerUid,
+        legacyRecipeId: meal.sourceRecipeId,
+      };
+      promotedLegacyRecipes.set(legacyKey, recipe);
+
+      batch.set(recipeRef, {
+        ...cleanPayload,
+        createdBy: currentUserUid,
+        accessUserIds: sharedUsers,
+        legacyOwnerUid: meal.sourceRecipeOwnerUid,
+        legacyRecipeId: meal.sourceRecipeId,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      hasWrites = true;
+    }
+
+    if (!recipe) continue;
+
+    const sharedUsers = uniqueUserIds([
+      ...baseSharedUsers,
+      meal.sourceRecipeOwnerUid,
+    ]);
+    const missingAccess = sharedUsers.some(
+      (userUid) => !(recipe.accessUserIds || []).includes(userUid),
+    );
+    const needsSourceMigration =
+      meal.sourceRecipeScope !== 'shared' || meal.sourceRecipeId !== recipe.id;
+
+    if (missingAccess && !promotedLegacyRecipes.has(legacyKey)) {
+      batch.update(getSharedRecipeRef(recipe.id), {
+        accessUserIds: arrayUnion(...sharedUsers),
+        updatedAt: serverTimestamp(),
+      });
+      hasWrites = true;
+    }
+
+    if (needsSourceMigration) {
+      batch.update(getTripSubdocumentRef(groupId, 'meals', meal.id), {
+        sourceRecipeId: recipe.id,
+        sourceRecipeOwnerUid: recipe.createdBy || currentUserUid,
+        sourceRecipeScope: 'shared',
+        updatedAt: serverTimestamp(),
+      });
+      hasWrites = true;
+    }
+  }
+
+  if (hasWrites) {
+    await batch.commit();
+  }
 }
 
 export async function updateMeal({ groupId, mealId, name, servings, ingredients = [] }) {
@@ -331,9 +520,12 @@ function validateExtraPayload({ name, mode, quantity, unit, purchasePlace, ingre
     };
   }
 
+  const meaningfulIngredients = (ingredients || []).filter(
+    (ingredient) => !isBlankIngredient(ingredient),
+  );
   const cleanIngredients = normalizeIngredients(ingredients);
 
-  if ((ingredients || []).length !== cleanIngredients.length) {
+  if (meaningfulIngredients.length !== cleanIngredients.length) {
     throw new Error('Revisá los ingredientes del extra.');
   }
 

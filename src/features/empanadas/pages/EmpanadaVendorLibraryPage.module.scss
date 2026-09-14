@@ -1,0 +1,23 @@
+@use "@/styles/refs" as *;
+
+.page { display: grid; gap: $space-lg; max-width: 1040px; margin: 0 auto; }
+.backLink { display: inline-flex; align-items: center; justify-self: start; gap: $space-xs; padding: $space-xs $space-sm; color: $color-text-secondary; font-size: $font-size-body-sm; font-weight: $font-weight-bold; border-radius: $radius-pill; &:hover { color: $color-text-primary; background: $color-bg-elevated-2; } }
+.hero, .formCard, .vendorCard { background: $color-bg-elevated; border: 1px solid $color-border; border-radius: $radius-xl; box-shadow: $shadow-sm; }
+.hero { display: flex; flex-direction: column; gap: $space-md; padding: $space-lg; @media (min-width: 760px) { flex-direction: row; align-items: center; justify-content: space-between; } h1 { margin-bottom: $space-xs; color: $color-text-primary; font-family: $font-family-display; font-size: $font-size-heading-lg; letter-spacing: -0.04em; } p { max-width: 680px; color: $color-text-secondary; } }
+.eyebrow { margin-bottom: $space-xs; color: $color-accent-primary !important; font-size: $font-size-label-sm; font-weight: $font-weight-bold; letter-spacing: .12em; text-transform: uppercase; }
+.heroActions, .formActions, .cardActions, .sectionTitleRow { display: flex; flex-wrap: wrap; gap: $space-sm; align-items: center; }
+.primaryButton, .secondaryButton { display: inline-flex; align-items: center; justify-content: center; gap: $space-xs; min-height: 40px; padding: $space-xs $space-md; font-weight: $font-weight-bold; border-radius: $radius-md; transition: transform 160ms ease, opacity 160ms ease; &:not(:disabled):hover { transform: translateY(-1px); } &:disabled { opacity: .55; cursor: not-allowed; } }
+.primaryButton { color: $color-accent-primary-contrast; background: $color-accent-primary; }
+.secondaryButton { color: $color-text-primary; background: $color-bg-elevated-2; border: 1px solid $color-border; }
+.formCard { display: grid; gap: $space-lg; padding: $space-lg; }
+.field { display: grid; gap: $space-xs; span { color: $color-text-secondary; font-size: $font-size-label-sm; font-weight: $font-weight-medium; } input { width: 100%; min-height: 42px; padding: .7rem $space-sm; color: $color-text-primary; background: $color-bg-elevated; border: 1px solid $color-border; border-radius: $radius-md; outline: none; &:focus { border-color: rgba($color-accent-primary,.72); box-shadow: 0 0 0 3px rgba($color-accent-primary,.14); } } }
+.flavorsEditor { display: grid; gap: $space-sm; }
+.sectionTitleRow { justify-content: space-between; align-items: flex-end; h2 { color: $color-text-primary; font-size: $font-size-heading-sm; } p { color: $color-text-secondary; font-size: $font-size-body-sm; } }
+.flavorRow { display: grid; grid-template-columns: minmax(90px, .3fr) minmax(0, 1fr) auto; gap: $space-sm; align-items: end; padding: $space-sm; background: $color-bg-elevated-2; border: 1px solid $color-border; border-radius: $radius-lg; }
+.iconButton, .iconDangerButton { display: grid; width: 36px; height: 36px; border-radius: $radius-pill; place-items: center; color: $color-text-muted; &:hover { background: rgba($color-accent-primary,.1); color: $color-accent-primary; } &:disabled { opacity: .4; cursor: not-allowed; } }
+.iconDangerButton:hover { color: $color-danger; background: rgba($color-danger,.1); }
+.error { padding: $space-sm $space-md; color: $color-danger; background: rgba($color-danger,.08); border: 1px solid rgba($color-danger,.22); border-radius: $radius-md; }
+.emptyState { display: grid; gap: $space-xs; justify-items: center; padding: $space-xl; text-align: center; color: $color-text-secondary; background: $color-bg-elevated; border: 1px dashed $color-border-strong; border-radius: $radius-xl; strong { color: $color-text-primary; } }
+.cardsGrid { display: grid; gap: $space-md; @media (min-width: 720px) { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+.vendorCard { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: $space-md; padding: $space-lg; h2 { color: $color-text-primary; font-size: $font-size-heading-sm; } p { color: $color-text-secondary; font-size: $font-size-body-sm; } }
+.flavorPreview { grid-column: 1 / -1; display: grid; gap: $space-2xs; padding-top: $space-sm; border-top: 1px solid $color-border; span { color: $color-text-secondary; font-size: $font-size-body-sm; strong { color: $color-text-primary; display: inline-block; min-width: 3rem; } } small { margin-top: $space-xs; color: $color-text-muted; } }

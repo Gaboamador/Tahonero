@@ -6,11 +6,14 @@ import {
   createMeal,
   createMealAndLibraryRecipe,
   deleteMeal,
+  importSharedRecipeToTrip,
   saveTripMealToLibrary,
   updateMeal,
+  updateSharedRecipeFromTripMeal,
 } from '@/features/meals/services/mealService';
 import {
   calculateMealDemand,
+  createEmptyIngredient,
   createLocalId,
   formatFoodQuantity,
 } from '@/features/meals/utils/mealUtils';
@@ -20,7 +23,7 @@ function createEmptyForm(participantCount) {
   return {
     name: '',
     servings: String(Math.max(participantCount, 1)),
-    ingredients: [],
+    ingredients: [createEmptyIngredient()],
   };
 }
 
@@ -30,6 +33,7 @@ function MealCatalogSection({
   mealPlan,
   participantCount,
   currentUserUid,
+  sharedUserIds = [],
   libraryRecipes = [],
   libraryLoading = false,
   purchasePlaceSuggestions = [],
@@ -43,6 +47,18 @@ function MealCatalogSection({
   const [savingMealId, setSavingMealId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const isRecipeAlreadyImported = (recipe) =>
+    meals.some((meal) => {
+      if (meal.sourceRecipeId === recipe.id) return true;
+      return (
+        meal.sourceRecipeScope !== 'shared' &&
+        recipe.legacyOwnerUid &&
+        recipe.legacyRecipeId &&
+        meal.sourceRecipeOwnerUid === recipe.legacyOwnerUid &&
+        meal.sourceRecipeId === recipe.legacyRecipeId
+      );
+    });
 
   const resetForm = () => {
     setFormData(createEmptyForm(participantCount));
@@ -66,12 +82,15 @@ function MealCatalogSection({
     setFormData({
       name: meal.name || '',
       servings: String(meal.servings || Math.max(participantCount, 1)),
-      ingredients: (meal.ingredients || []).map((ingredient) => ({
-        ...ingredient,
-        id: ingredient.id || createLocalId('ingredient'),
-        quantity: String(ingredient.quantity ?? ''),
-        purchasePlace: ingredient.purchasePlace || '',
-      })),
+      ingredients:
+        (meal.ingredients || []).length > 0
+          ? meal.ingredients.map((ingredient) => ({
+              ...ingredient,
+              id: ingredient.id || createLocalId('ingredient'),
+              quantity: String(ingredient.quantity ?? ''),
+              purchasePlace: ingredient.purchasePlace || '',
+            }))
+          : [createEmptyIngredient()],
     });
     setIsLibraryOpen(false);
     setError('');
@@ -95,6 +114,7 @@ function MealCatalogSection({
           groupId,
           ...formData,
           createdBy: currentUserUid,
+          accessUserIds: sharedUserIds,
         });
       } else {
         await createMeal({
@@ -114,10 +134,7 @@ function MealCatalogSection({
   };
 
   const handleImport = async (recipe) => {
-    const alreadyImported = meals.some(
-      (meal) =>
-        meal.sourceRecipeId === recipe.id && meal.sourceRecipeOwnerUid === currentUserUid,
-    );
+    const alreadyImported = isRecipeAlreadyImported(recipe);
 
     if (alreadyImported) {
       setError(`"${recipe.name}" ya está importada en este viaje.`);
@@ -128,14 +145,11 @@ function MealCatalogSection({
     setImportingRecipeId(recipe.id);
 
     try {
-      await createMeal({
+      await importSharedRecipeToTrip({
         groupId,
-        name: recipe.name,
-        servings: recipe.servings,
-        ingredients: recipe.ingredients || [],
+        recipe,
         createdBy: currentUserUid,
-        sourceRecipeId: recipe.id,
-        sourceRecipeOwnerUid: currentUserUid,
+        accessUserIds: sharedUserIds,
       });
     } catch (err) {
       console.error(err);
@@ -154,10 +168,44 @@ function MealCatalogSection({
         groupId,
         meal,
         currentUserUid,
+        accessUserIds: sharedUserIds,
       });
     } catch (err) {
       console.error(err);
       setError(err.message || 'No se pudo guardar la comida en la biblioteca.');
+    } finally {
+      setSavingMealId('');
+    }
+  };
+
+  const handleUpdateSharedRecipe = async (meal) => {
+    if (!window.confirm(`¿Actualizar la receta compartida "${meal.name}" con la versión de este viaje? Esto afectará lo que se importe en viajes futuros, no las snapshots ya existentes.`)) {
+      return;
+    }
+
+    const existingSharedRecipe =
+      meal.sourceRecipeScope === 'shared'
+        ? libraryRecipes.find((recipe) => recipe.id === meal.sourceRecipeId) || null
+        : libraryRecipes.find(
+            (recipe) =>
+              recipe.legacyOwnerUid === meal.sourceRecipeOwnerUid &&
+              recipe.legacyRecipeId === meal.sourceRecipeId,
+          ) || null;
+
+    setError('');
+    setSavingMealId(meal.id);
+
+    try {
+      await updateSharedRecipeFromTripMeal({
+        groupId,
+        meal,
+        currentUserUid,
+        accessUserIds: sharedUserIds,
+        existingSharedRecipe,
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'No se pudo actualizar la receta compartida.');
     } finally {
       setSavingMealId('');
     }
@@ -184,7 +232,7 @@ function MealCatalogSection({
         <div>
           <h2>Comidas del viaje</h2>
           <p>
-            Importá una receta guardada o creá una comida específica para este viaje. Las importadas son copias independientes.
+            Importá una receta compartida o creá una comida específica para este viaje. Las importadas son snapshots independientes.
           </p>
         </div>
 
@@ -200,7 +248,7 @@ function MealCatalogSection({
             }}
           >
             <FiBookOpen aria-hidden="true" />
-            Desde mi biblioteca
+            Desde la biblioteca
           </button>
 
           <button type="button" className={styles.primaryButton} onClick={handleOpenCreate}>
@@ -216,7 +264,7 @@ function MealCatalogSection({
         <div className={styles.formCard}>
           <div className={styles.subsectionHeader}>
             <div>
-              <strong>Mi biblioteca</strong>
+              <strong>Biblioteca compartida</strong>
               <span>Importar crea una snapshot dentro del viaje.</span>
             </div>
             <Link to="/biblioteca-comidas" className={styles.textLink}>Administrar biblioteca</Link>
@@ -226,16 +274,14 @@ function MealCatalogSection({
 
           {!libraryLoading && libraryRecipes.length === 0 ? (
             <div className={styles.compactEmptyState}>
-              No tenés comidas guardadas todavía. Podés crear una nueva y marcar “Guardar también en mi biblioteca”.
+              No tenés recetas disponibles todavía. Creá una nueva o usá una que otra persona comparta con vos al usarla en un viaje.
             </div>
           ) : null}
 
           {!libraryLoading && libraryRecipes.length > 0 ? (
             <div className={styles.libraryList}>
               {libraryRecipes.map((recipe) => {
-                const alreadyImported = meals.some(
-                  (meal) => meal.sourceRecipeId === recipe.id && meal.sourceRecipeOwnerUid === currentUserUid,
-                );
+                const alreadyImported = isRecipeAlreadyImported(recipe);
 
                 return (
                   <div key={recipe.id} className={styles.libraryRow}>
@@ -306,11 +352,11 @@ function MealCatalogSection({
                 checked={saveToLibrary}
                 onChange={(event) => setSaveToLibrary(event.target.checked)}
               />
-              <span>Guardar también en mi biblioteca para reutilizarla en otros viajes</span>
+              <span>Guardar también en la biblioteca compartida para reutilizarla en otros viajes</span>
             </label>
           ) : (
             <div className={styles.infoBox}>
-              Los cambios de esta comida afectan sólo a este viaje, aunque haya sido importada desde tu biblioteca.
+              Los cambios de esta comida afectan sólo a este viaje, aunque haya sido importada desde la biblioteca compartida.
             </div>
           )}
 
@@ -328,7 +374,7 @@ function MealCatalogSection({
       {meals.length === 0 ? (
         <div className={styles.emptyState}>
           <strong>Todavía no hay comidas en este viaje.</strong>
-          <span>Importá una de tu biblioteca o creá una nueva para poder asignarla al calendario.</span>
+          <span>Importá una de la biblioteca compartida o creá una nueva para poder asignarla al calendario.</span>
         </div>
       ) : (
         <div className={styles.cardsList}>
@@ -368,9 +414,19 @@ function MealCatalogSection({
                         disabled={savingMealId === meal.id}
                       >
                         <FiBookOpen aria-hidden="true" />
-                        {savingMealId === meal.id ? 'Guardando...' : 'Guardar en biblioteca'}
+                        {savingMealId === meal.id ? 'Guardando...' : 'Guardar en biblioteca compartida'}
                       </button>
-                    ) : null}
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.compactTextButton}
+                        onClick={() => handleUpdateSharedRecipe(meal)}
+                        disabled={savingMealId === meal.id}
+                      >
+                        <FiBookOpen aria-hidden="true" />
+                        {savingMealId === meal.id ? 'Actualizando...' : 'Actualizar receta compartida'}
+                      </button>
+                    )}
                     <button type="button" className={styles.iconButton} onClick={() => handleEdit(meal)} aria-label={`Editar ${meal.name}`}>
                       <FiEdit2 aria-hidden="true" />
                     </button>

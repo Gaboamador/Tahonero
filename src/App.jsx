@@ -1,8 +1,11 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { AuthProvider } from '@/auth/AuthProvider';
 import ExpensesPage from '@/features/expenses/pages/ExpensesPage';
+import EmpanadasPage from '@/features/empanadas/pages/EmpanadasPage';
+import EmpanadaVendorLibraryPage from '@/features/empanadas/pages/EmpanadaVendorLibraryPage';
 import MealsPage from '@/features/meals/pages/MealsPage';
 import RecipeLibraryPage from '@/features/meals/pages/RecipeLibraryPage';
+import ShoppingPage from '@/features/shopping/pages/ShoppingPage';
 import TripMembersPage from '@/features/members/pages/TripMembersPage';
 import TripLayout from '@/features/trips/layouts/TripLayout';
 import TripDashboardPage from '@/features/trips/pages/TripDashboardPage';
@@ -61,11 +64,14 @@ function AppRoutes() {
 
         <Route path="/viajes/nuevo" element={<CreateGroupPage />} />
         <Route path="/biblioteca-comidas" element={<RecipeLibraryPage />} />
+        <Route path="/biblioteca-empanadas" element={<EmpanadaVendorLibraryPage />} />
 
         <Route path="/viajes/:groupId" element={<TripLayout />}>
           <Route index element={<TripDashboardPage />} />
           <Route path="gastos" element={<ExpensesPage />} />
           <Route path="comidas" element={<MealsPage />} />
+          <Route path="compras" element={<ShoppingPage />} />
+          <Route path="empanadas" element={<EmpanadasPage />} />
           <Route path="participantes" element={<TripMembersPage />} />
         </Route>
 
@@ -105,6 +111,14 @@ function AppRoutes() {
         <Route
           path="/grupos/:groupId/comidas"
           element={<LegacyGroupRedirect buildPath={({ groupId }) => `/viajes/${groupId}/comidas`} />}
+        />
+        <Route
+          path="/grupos/:groupId/compras"
+          element={<LegacyGroupRedirect buildPath={({ groupId }) => `/viajes/${groupId}/compras`} />}
+        />
+        <Route
+          path="/grupos/:groupId/empanadas"
+          element={<LegacyGroupRedirect buildPath={({ groupId }) => `/viajes/${groupId}/empanadas`} />}
         />
       </Route>
 
