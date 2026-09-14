@@ -1,0 +1,116 @@
+@use "@/styles/refs" as *;
+
+.page {
+  display: grid;
+  gap: $space-md;
+}
+
+.hero {
+  padding: $space-lg;
+
+  background:
+    linear-gradient(135deg, rgba($color-accent-warm, 0.1), transparent),
+    $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-sm;
+
+  h2 {
+    margin-bottom: $space-xs;
+    color: $color-text-primary;
+    font-family: $font-family-display;
+    font-size: $font-size-heading-md;
+  }
+
+  p:not(.eyebrow) {
+    max-width: 760px;
+    color: $color-text-secondary;
+  }
+}
+
+.eyebrow {
+  margin-bottom: $space-xs;
+  color: $color-accent-warm !important;
+  font-size: $font-size-label-sm;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.summaryGrid {
+  display: grid;
+  gap: $space-sm;
+
+  @media (min-width: 620px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 980px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.summaryCard {
+  display: flex;
+  gap: $space-sm;
+  align-items: flex-start;
+  padding: $space-md;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+
+  > svg {
+    flex: 0 0 auto;
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-top: 0.15rem;
+    color: $color-accent-warm;
+  }
+
+  div {
+    display: grid;
+    gap: $space-2xs;
+  }
+
+  span,
+  small {
+    color: $color-text-muted;
+  }
+
+  span {
+    font-size: $font-size-label-xs;
+    font-weight: $font-weight-bold;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  strong {
+    color: $color-text-primary;
+    font-size: $font-size-heading-sm;
+  }
+
+  small {
+    font-size: $font-size-body-xs;
+  }
+}
+
+.error,
+.loading {
+  padding: $space-sm $space-md;
+  font-size: $font-size-body-sm;
+  border-radius: $radius-md;
+}
+
+.error {
+  color: $color-danger;
+  background: rgba($color-danger, 0.08);
+  border: 1px solid rgba($color-danger, 0.22);
+}
+
+.loading {
+  color: $color-text-secondary;
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+}

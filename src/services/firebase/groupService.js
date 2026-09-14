@@ -6,16 +6,19 @@ import {
   deleteDoc,
   deleteField,
   doc,
+  getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   updateDoc,
   where,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import { findUserLookupByEmail, normalizeEmail } from './userService';
-import { isValidTripDateRange } from '@/utils/tripUtils';
+import { getTripMealSlots, isValidTripMealRange } from '@/utils/tripUtils';
 
 export function getGroupsCollectionRef() {
   return collection(db, 'groups');
@@ -116,7 +119,15 @@ export function buildManualMember({ name, email = '' }) {
   };
 }
 
-export async function createGroup({ name, description = '', startDate, endDate, userProfile }) {
+export async function createGroup({
+  name,
+  description = '',
+  startDate,
+  endDate,
+  firstMeal = 'lunch',
+  lastMeal = 'dinner',
+  userProfile,
+}) {
   const trimmedName = name.trim();
   const trimmedDescription = description.trim();
 
@@ -124,8 +135,12 @@ export async function createGroup({ name, description = '', startDate, endDate, 
     throw new Error('El nombre del viaje es obligatorio.');
   }
 
-  if (!startDate || !endDate || !isValidTripDateRange(startDate, endDate)) {
-    throw new Error('Elegí un rango de fechas válido para el viaje.');
+  if (
+    !startDate ||
+    !endDate ||
+    !isValidTripMealRange(startDate, endDate, firstMeal, lastMeal)
+  ) {
+    throw new Error('Elegí fechas y límites de comidas válidos para el viaje.');
   }
 
   if (!userProfile?.uid) {
@@ -136,11 +151,13 @@ export async function createGroup({ name, description = '', startDate, endDate, 
 
   const groupPayload = {
     entityType: 'trip',
-    schemaVersion: 3,
+    schemaVersion: 4,
     name: trimmedName,
     description: trimmedDescription,
     startDate,
     endDate,
+    firstMeal,
+    lastMeal,
     createdBy: userProfile.uid,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -166,6 +183,8 @@ export async function updateGroupDetails({
   description = '',
   startDate = '',
   endDate = '',
+  firstMeal = 'lunch',
+  lastMeal = 'dinner',
 }) {
   const trimmedName = name.trim();
   const trimmedDescription = description.trim();
@@ -179,18 +198,47 @@ export async function updateGroupDetails({
     throw new Error('El nombre del viaje es obligatorio.');
   }
 
-  if (hasAnyDate && (!startDate || !endDate || !isValidTripDateRange(startDate, endDate))) {
-    throw new Error('Completá ambas fechas con un rango válido.');
+  if (
+    hasAnyDate &&
+    (!startDate ||
+      !endDate ||
+      !isValidTripMealRange(startDate, endDate, firstMeal, lastMeal))
+  ) {
+    throw new Error('Completá las fechas y los límites de comidas con valores válidos.');
   }
 
-  await updateDoc(getGroupRef(groupId), {
+  const groupUpdate = {
     entityType: 'trip',
+    schemaVersion: 4,
     name: trimmedName,
     description: trimmedDescription,
     startDate: hasAnyDate ? startDate : deleteField(),
     endDate: hasAnyDate ? endDate : deleteField(),
+    firstMeal: hasAnyDate ? firstMeal : deleteField(),
+    lastMeal: hasAnyDate ? lastMeal : deleteField(),
     updatedAt: serverTimestamp(),
+  };
+
+  if (!hasAnyDate) {
+    await updateDoc(getGroupRef(groupId), groupUpdate);
+    return;
+  }
+
+  const validSlotIds = new Set(
+    getTripMealSlots({ startDate, endDate, firstMeal, lastMeal }).map((slot) => slot.id),
+  );
+  const mealPlanSnapshot = await getDocs(collection(db, 'groups', groupId, 'mealPlan'));
+  const batch = writeBatch(db);
+
+  batch.update(getGroupRef(groupId), groupUpdate);
+
+  mealPlanSnapshot.docs.forEach((planDoc) => {
+    if (!validSlotIds.has(planDoc.id)) {
+      batch.delete(planDoc.ref);
+    }
   });
+
+  await batch.commit();
 }
 
 export async function deleteEmptyGroup({ group, expenses = [] }) {
@@ -200,6 +248,19 @@ export async function deleteEmptyGroup({ group, expenses = [] }) {
 
   if (expenses.length > 0) {
     throw new Error('No se puede borrar un viaje que ya tiene movimientos.');
+  }
+
+  const foodCollectionNames = ['meals', 'mealPlan', 'foodExtras', 'drinkPlans'];
+  const foodSnapshots = await Promise.all(
+    foodCollectionNames.map((collectionName) =>
+      getDocs(query(collection(db, 'groups', group.id, collectionName), limit(1))),
+    ),
+  );
+
+  if (foodSnapshots.some((snapshot) => !snapshot.empty)) {
+    throw new Error(
+      'No se puede borrar el viaje porque tiene comidas, extras o bebidas cargados.',
+    );
   }
 
   const shouldDelete = window.confirm(
@@ -232,7 +293,7 @@ export async function addManualMemberToGroup({ group, groupId, name, email = '' 
   };
 
   if (membershipState) {
-    update.schemaVersion = 3;
+    update.schemaVersion = 4;
     update.participantIds = uniqueIds([...membershipState.participantIds, member.memberId]);
     update.accessUserIds = membershipState.accessUserIds;
     update.memberIds = uniqueIds([...membershipState.legacyMemberIds, member.memberId]);
@@ -277,7 +338,7 @@ export async function addRegisteredUserToGroup({ group, email }) {
 
   await updateDoc(getGroupRef(group.id), {
     [`membersMap.${member.uid}`]: member,
-    schemaVersion: 3,
+    schemaVersion: 4,
     participantIds: uniqueIds([...membershipState.participantIds, member.memberId]),
     accessUserIds: uniqueIds([...membershipState.accessUserIds, member.userUid]),
     memberIds: uniqueIds([
@@ -358,7 +419,7 @@ export async function linkManualMemberToRegisteredUser({ group, manualMemberId, 
 
   await updateDoc(getGroupRef(group.id), {
     [`membersMap.${manualMemberId}`]: linkedMember,
-    schemaVersion: 3,
+    schemaVersion: 4,
     participantIds: membershipState.participantIds,
     accessUserIds: uniqueIds([...membershipState.accessUserIds, userLookup.uid]),
     memberIds: uniqueIds([...membershipState.legacyMemberIds, userLookup.uid]),
@@ -400,6 +461,19 @@ export async function removeManualMemberFromGroup({ group, memberId, expenses = 
   if (isUsedInExpenses) {
     throw new Error(
       'No se puede eliminar este miembro porque ya participa en uno o más movimientos. Primero editá o borrá esos movimientos.',
+    );
+  }
+
+  const drinkUsageQuery = query(
+    collection(db, 'groups', group.id, 'drinkPlans'),
+    where('participantIds', 'array-contains', memberId),
+    limit(1),
+  );
+  const drinkUsageSnapshot = await getDocs(drinkUsageQuery);
+
+  if (!drinkUsageSnapshot.empty) {
+    throw new Error(
+      'No se puede eliminar este participante porque está incluido en un cálculo de bebidas. Editá esa bebida primero.',
     );
   }
 

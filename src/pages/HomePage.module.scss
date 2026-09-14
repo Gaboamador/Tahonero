@@ -117,3 +117,43 @@
   border: 1px solid rgba($color-danger, 0.22);
   border-radius: $radius-md;
 }
+
+.heroActions {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+
+  @media (min-width: 520px) {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-xs;
+
+  min-height: 44px;
+  padding: $space-sm $space-md;
+
+  color: $color-text-primary;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+
+  background: $color-bg-elevated-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: $color-border-strong;
+    background: $color-bg-elevated;
+    transform: translateY(-1px);
+  }
+}

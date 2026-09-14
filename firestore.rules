@@ -56,6 +56,8 @@ service cloud.firestore {
         "description",
         "startDate",
         "endDate",
+        "firstMeal",
+        "lastMeal",
         "createdBy",
         "createdAt",
         "updatedAt",
@@ -64,6 +66,10 @@ service cloud.firestore {
         "accessUserIds",
         "membersMap"
       ]);
+    }
+
+    function isMealBoundary(value) {
+      return value == "lunch" || value == "dinner";
     }
 
     function groupOptionalTripFieldsAreValid() {
@@ -94,6 +100,19 @@ service cloud.firestore {
             && request.resource.data.startDate.size() > 0
             && request.resource.data.endDate is string
             && request.resource.data.endDate.size() > 0
+          )
+        )
+        && (
+          !request.resource.data.keys().hasAny(["firstMeal", "lastMeal"])
+          || (
+            request.resource.data.keys().hasAll(["firstMeal", "lastMeal"])
+            && isMealBoundary(request.resource.data.firstMeal)
+            && isMealBoundary(request.resource.data.lastMeal)
+            && (
+              request.resource.data.startDate != request.resource.data.endDate
+              || request.resource.data.firstMeal != "dinner"
+              || request.resource.data.lastMeal != "lunch"
+            )
           )
         );
     }
@@ -253,6 +272,195 @@ service cloud.firestore {
         && (isValidExpense() || isValidPayment());
     }
 
+    function isAllowedFoodUnit(unit) {
+      return unit in ["g", "kg", "ml", "l", "unidad", "paquete", "lata", "botella"];
+    }
+
+    function foodItemImmutableFieldsAreUnchanged() {
+      return request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function isValidMeal() {
+      return request.resource.data.keys().hasOnly([
+          "name",
+          "servings",
+          "ingredients",
+          "sourceRecipeId",
+          "sourceRecipeOwnerUid",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "name",
+          "servings",
+          "ingredients",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.servings is int
+        && request.resource.data.servings > 0
+        && request.resource.data.ingredients is list
+        && (
+          !request.resource.data.keys().hasAny(["sourceRecipeId", "sourceRecipeOwnerUid"])
+          || (
+            request.resource.data.keys().hasAll(["sourceRecipeId", "sourceRecipeOwnerUid"])
+            && request.resource.data.sourceRecipeId is string
+            && request.resource.data.sourceRecipeId.size() > 0
+            && request.resource.data.sourceRecipeOwnerUid is string
+            && request.resource.data.sourceRecipeOwnerUid.size() > 0
+          )
+        )
+        && request.resource.data.createdBy is string;
+    }
+
+    function isValidMealPlan(slotId) {
+      return request.resource.data.keys().hasOnly([
+          "date",
+          "mealType",
+          "assignmentType",
+          "mealId",
+          "label",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "date",
+          "mealType",
+          "assignmentType",
+          "mealId",
+          "label",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.date is string
+        && request.resource.data.date.size() > 0
+        && isMealBoundary(request.resource.data.mealType)
+        && slotId == request.resource.data.date + "_" + request.resource.data.mealType
+        && request.resource.data.assignmentType in ["meal", "leftovers", "custom"]
+        && request.resource.data.mealId is string
+        && request.resource.data.label is string
+        && request.resource.data.createdBy is string
+        && (
+          (request.resource.data.assignmentType == "meal"
+            && request.resource.data.mealId.size() > 0
+            && request.resource.data.label == "")
+          || (request.resource.data.assignmentType == "leftovers"
+            && request.resource.data.mealId == ""
+            && request.resource.data.label == "Sobras")
+          || (request.resource.data.assignmentType == "custom"
+            && request.resource.data.mealId == ""
+            && request.resource.data.label.size() > 0)
+        );
+    }
+
+    function isValidFoodExtra() {
+      return request.resource.data.keys().hasOnly([
+          "name",
+          "mode",
+          "quantity",
+          "unit",
+          "purchasePlace",
+          "ingredients",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "name",
+          "mode",
+          "quantity",
+          "unit",
+          "ingredients",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.mode in ["direct", "recipe"]
+        && request.resource.data.quantity is number
+        && request.resource.data.unit is string
+        && (
+          !request.resource.data.keys().hasAny(["purchasePlace"])
+          || request.resource.data.purchasePlace is string
+        )
+        && request.resource.data.ingredients is list
+        && request.resource.data.createdBy is string
+        && (
+          (request.resource.data.mode == "direct"
+            && request.resource.data.quantity > 0
+            && isAllowedFoodUnit(request.resource.data.unit)
+            && request.resource.data.ingredients.size() == 0)
+          || (request.resource.data.mode == "recipe"
+            && request.resource.data.quantity == 0
+            && request.resource.data.unit == "")
+        );
+    }
+
+    function isValidDrinkPlan() {
+      return request.resource.data.keys().hasOnly([
+          "name",
+          "calculationMode",
+          "quantity",
+          "unit",
+          "purchasePlace",
+          "participantIds",
+          "coverageMode",
+          "coverageDays",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "name",
+          "calculationMode",
+          "quantity",
+          "unit",
+          "participantIds",
+          "coverageMode",
+          "coverageDays",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.calculationMode in ["fixed", "perPersonPerDay"]
+        && request.resource.data.quantity is number
+        && request.resource.data.quantity > 0
+        && isAllowedFoodUnit(request.resource.data.unit)
+        && (
+          !request.resource.data.keys().hasAny(["purchasePlace"])
+          || request.resource.data.purchasePlace is string
+        )
+        && request.resource.data.participantIds is list
+        && request.resource.data.coverageMode in ["trip", "custom"]
+        && request.resource.data.coverageDays is int
+        && request.resource.data.coverageDays >= 0
+        && request.resource.data.createdBy is string
+        && (
+          (request.resource.data.calculationMode == "fixed"
+            && request.resource.data.participantIds.size() == 0
+            && request.resource.data.coverageMode == "trip"
+            && request.resource.data.coverageDays == 0)
+          || (request.resource.data.calculationMode == "perPersonPerDay"
+            && request.resource.data.participantIds.size() > 0
+            && (
+              (request.resource.data.coverageMode == "trip"
+                && request.resource.data.coverageDays == 0)
+              || (request.resource.data.coverageMode == "custom"
+                && request.resource.data.coverageDays > 0)
+            ))
+        );
+    }
+
     match /users/{userId} {
       allow read: if isSelf(userId);
 
@@ -260,6 +468,17 @@ service cloud.firestore {
         && userProfileHasValidShape();
 
       allow delete: if false;
+
+      match /recipes/{recipeId} {
+        allow read: if isSelf(userId);
+        allow create: if isSelf(userId)
+          && request.resource.data.createdBy == request.auth.uid
+          && isValidMeal();
+        allow update: if isSelf(userId)
+          && foodItemImmutableFieldsAreUnchanged()
+          && isValidMeal();
+        allow delete: if isSelf(userId);
+      }
     }
 
     match /userLookup/{email} {
@@ -290,6 +509,50 @@ service cloud.firestore {
         allow update: if isGroupMember(groupId)
           && movementUpdateIsValid();
 
+        allow delete: if isGroupMember(groupId);
+      }
+
+      match /meals/{mealId} {
+        allow read: if isGroupMember(groupId);
+        allow create: if isGroupMember(groupId)
+          && request.resource.data.createdBy == request.auth.uid
+          && isValidMeal();
+        allow update: if isGroupMember(groupId)
+          && foodItemImmutableFieldsAreUnchanged()
+          && isValidMeal();
+        allow delete: if isGroupMember(groupId);
+      }
+
+      match /mealPlan/{slotId} {
+        allow read: if isGroupMember(groupId);
+        allow create: if isGroupMember(groupId)
+          && request.resource.data.createdBy == request.auth.uid
+          && isValidMealPlan(slotId);
+        allow update: if isGroupMember(groupId)
+          && foodItemImmutableFieldsAreUnchanged()
+          && isValidMealPlan(slotId);
+        allow delete: if isGroupMember(groupId);
+      }
+
+      match /foodExtras/{extraId} {
+        allow read: if isGroupMember(groupId);
+        allow create: if isGroupMember(groupId)
+          && request.resource.data.createdBy == request.auth.uid
+          && isValidFoodExtra();
+        allow update: if isGroupMember(groupId)
+          && foodItemImmutableFieldsAreUnchanged()
+          && isValidFoodExtra();
+        allow delete: if isGroupMember(groupId);
+      }
+
+      match /drinkPlans/{drinkId} {
+        allow read: if isGroupMember(groupId);
+        allow create: if isGroupMember(groupId)
+          && request.resource.data.createdBy == request.auth.uid
+          && isValidDrinkPlan();
+        allow update: if isGroupMember(groupId)
+          && foodItemImmutableFieldsAreUnchanged()
+          && isValidDrinkPlan();
         allow delete: if isGroupMember(groupId);
       }
     }

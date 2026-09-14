@@ -25,6 +25,8 @@ function EditGroupPage() {
     description: '',
     startDate: '',
     endDate: '',
+    firstMeal: 'lunch',
+    lastMeal: 'dinner',
   });
 
   const [formInitialized, setFormInitialized] = useState(false);
@@ -48,6 +50,8 @@ function EditGroupPage() {
       description: group.description || '',
       startDate: group.startDate || '',
       endDate: group.endDate || '',
+      firstMeal: group.firstMeal || 'lunch',
+      lastMeal: group.lastMeal || 'dinner',
     });
 
     setFormInitialized(true);
@@ -75,6 +79,8 @@ function EditGroupPage() {
         description: formData.description,
         startDate: formData.startDate,
         endDate: formData.endDate,
+        firstMeal: formData.firstMeal,
+        lastMeal: formData.lastMeal,
       });
 
       navigate(`/viajes/${groupId}`);
@@ -147,7 +153,7 @@ function EditGroupPage() {
         <div className={styles.header}>
           <p className={styles.eyebrow}>Configurar viaje</p>
           <h1>{group.name}</h1>
-          <p>Cambiá los datos generales y las fechas del viaje.</p>
+          <p>Cambiá los datos generales, las fechas y qué comidas incluye el primer y último día.</p>
         </div>
 
         <label className={styles.field}>
@@ -181,6 +187,7 @@ function EditGroupPage() {
               name="startDate"
               value={formData.startDate}
               onChange={handleChange}
+              required={Boolean(group.startDate && group.endDate)}
             />
           </label>
 
@@ -192,7 +199,36 @@ function EditGroupPage() {
               min={formData.startDate || undefined}
               value={formData.endDate}
               onChange={handleChange}
+              required={Boolean(group.startDate && group.endDate)}
             />
+          </label>
+        </div>
+
+        <div className={styles.dateFields}>
+          <label className={styles.field}>
+            <span>Primera comida del viaje</span>
+            <select
+              name="firstMeal"
+              value={formData.firstMeal}
+              onChange={handleChange}
+              disabled={!formData.startDate || !formData.endDate}
+            >
+              <option value="lunch">Almuerzo</option>
+              <option value="dinner">Cena</option>
+            </select>
+          </label>
+
+          <label className={styles.field}>
+            <span>Última comida del viaje</span>
+            <select
+              name="lastMeal"
+              value={formData.lastMeal}
+              onChange={handleChange}
+              disabled={!formData.startDate || !formData.endDate}
+            >
+              <option value="lunch">Almuerzo</option>
+              <option value="dinner">Cena</option>
+            </select>
           </label>
         </div>
 
@@ -214,16 +250,9 @@ function EditGroupPage() {
         <div>
           <p className={styles.dangerEyebrow}>Zona peligrosa</p>
           <h2>Borrar viaje</h2>
-
-          {canDeleteGroup ? (
-            <p>
-              Este viaje no tiene movimientos. Podés borrarlo definitivamente si ya no lo necesitás.
-            </p>
-          ) : (
-            <p>
-              Este viaje tiene movimientos cargados. Para evitar perder historial, sólo se puede borrar si está vacío.
-            </p>
-          )}
+          <p>
+            Sólo se puede borrar un viaje vacío. Gastos, comidas, extras o bebidas cargados bloquean el borrado para no dejar datos huérfanos.
+          </p>
         </div>
 
         {deleteError ? <p className={styles.error}>{deleteError}</p> : null}

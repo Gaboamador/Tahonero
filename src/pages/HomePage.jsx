@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FiMap, FiPlusCircle } from 'react-icons/fi';
+import { FiBookOpen, FiMap, FiPlusCircle } from 'react-icons/fi';
 import GroupCard from '@/components/GroupCard';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserGroups } from '@/hooks/useUserGroups';
@@ -24,10 +24,17 @@ function HomePage() {
           </p>
         </div>
 
-        <Link to="/viajes/nuevo" className={styles.primaryAction}>
-          <FiPlusCircle aria-hidden="true" />
-          Crear viaje
-        </Link>
+        <div className={styles.heroActions}>
+          <Link to="/biblioteca-comidas" className={styles.secondaryAction}>
+            <FiBookOpen aria-hidden="true" />
+            Biblioteca de comidas
+          </Link>
+
+          <Link to="/viajes/nuevo" className={styles.primaryAction}>
+            <FiPlusCircle aria-hidden="true" />
+            Crear viaje
+          </Link>
+        </div>
       </div>
 
       {groupsError ? <p className={styles.error}>{groupsError}</p> : null}

@@ -1,6 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { AuthProvider } from '@/auth/AuthProvider';
 import ExpensesPage from '@/features/expenses/pages/ExpensesPage';
+import MealsPage from '@/features/meals/pages/MealsPage';
+import RecipeLibraryPage from '@/features/meals/pages/RecipeLibraryPage';
 import TripMembersPage from '@/features/members/pages/TripMembersPage';
 import TripLayout from '@/features/trips/layouts/TripLayout';
 import TripDashboardPage from '@/features/trips/pages/TripDashboardPage';
@@ -58,10 +60,12 @@ function AppRoutes() {
         <Route index element={<HomePage />} />
 
         <Route path="/viajes/nuevo" element={<CreateGroupPage />} />
+        <Route path="/biblioteca-comidas" element={<RecipeLibraryPage />} />
 
         <Route path="/viajes/:groupId" element={<TripLayout />}>
           <Route index element={<TripDashboardPage />} />
           <Route path="gastos" element={<ExpensesPage />} />
+          <Route path="comidas" element={<MealsPage />} />
           <Route path="participantes" element={<TripMembersPage />} />
         </Route>
 
@@ -97,6 +101,10 @@ function AppRoutes() {
         <Route
           path="/grupos/:groupId/pagos/nuevo"
           element={<LegacyGroupRedirect buildPath={({ groupId }) => `/viajes/${groupId}/pagos/nuevo`} />}
+        />
+        <Route
+          path="/grupos/:groupId/comidas"
+          element={<LegacyGroupRedirect buildPath={({ groupId }) => `/viajes/${groupId}/comidas`} />}
         />
       </Route>
 

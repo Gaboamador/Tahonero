@@ -80,6 +80,7 @@
   }
 
   input,
+  select,
   textarea {
     width: 100%;
     padding: 0.8rem $space-md;
@@ -113,6 +114,17 @@
   @media (min-width: 560px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+.hint {
+  padding: $space-sm;
+
+  color: $color-text-secondary;
+  font-size: $font-size-body-sm;
+
+  background: rgba($color-accent-secondary, 0.08);
+  border: 1px solid rgba($color-accent-secondary, 0.22);
+  border-radius: $radius-md;
 }
 
 .error {

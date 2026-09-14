@@ -14,6 +14,8 @@ function CreateGroupPage() {
     description: '',
     startDate: '',
     endDate: '',
+    firstMeal: 'lunch',
+    lastMeal: 'dinner',
   });
 
   const [error, setError] = useState('');
@@ -47,6 +49,8 @@ function CreateGroupPage() {
         description: formData.description,
         startDate: formData.startDate,
         endDate: formData.endDate,
+        firstMeal: formData.firstMeal,
+        lastMeal: formData.lastMeal,
         userProfile: resolvedUserProfile,
       });
 
@@ -122,6 +126,28 @@ function CreateGroupPage() {
             />
           </label>
         </div>
+
+        <div className={styles.dateFields}>
+          <label className={styles.field}>
+            <span>Primera comida del viaje</span>
+            <select name="firstMeal" value={formData.firstMeal} onChange={handleChange}>
+              <option value="lunch">Almuerzo</option>
+              <option value="dinner">Cena</option>
+            </select>
+          </label>
+
+          <label className={styles.field}>
+            <span>Última comida del viaje</span>
+            <select name="lastMeal" value={formData.lastMeal} onChange={handleChange}>
+              <option value="lunch">Almuerzo</option>
+              <option value="dinner">Cena</option>
+            </select>
+          </label>
+        </div>
+
+        <p className={styles.hint}>
+          Esto permite, por ejemplo, empezar el viaje un lunes a la noche o terminarlo un viernes después del almuerzo.
+        </p>
 
         {error ? <p className={styles.error}>{error}</p> : null}
 

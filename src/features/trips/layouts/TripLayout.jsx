@@ -1,5 +1,13 @@
 import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
-import { FiArrowLeft, FiCalendar, FiDollarSign, FiHome, FiSettings, FiUsers } from 'react-icons/fi';
+import {
+  FiArrowLeft,
+  FiCalendar,
+  FiCoffee,
+  FiDollarSign,
+  FiHome,
+  FiSettings,
+  FiUsers,
+} from 'react-icons/fi';
 import { useAuth } from '@/hooks/useAuth';
 import { useGroup } from '@/hooks/useGroup';
 import { isUserGroupMember } from '@/services/firebase/groupService';
@@ -58,7 +66,11 @@ function TripLayout() {
           <div className={styles.dateRow}>
             <FiCalendar aria-hidden="true" />
             <span>{formatTripDateRange(group.startDate, group.endDate)}</span>
-            {daysCount > 0 ? <span className={styles.daysBadge}>{daysCount} {daysCount === 1 ? 'día' : 'días'}</span> : null}
+            {daysCount > 0 ? (
+              <span className={styles.daysBadge}>
+                {daysCount} {daysCount === 1 ? 'día' : 'días'}
+              </span>
+            ) : null}
           </div>
         </div>
 
@@ -84,6 +96,14 @@ function TripLayout() {
         >
           <FiDollarSign aria-hidden="true" />
           Gastos
+        </NavLink>
+
+        <NavLink
+          to={`/viajes/${group.id}/comidas`}
+          className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
+        >
+          <FiCoffee aria-hidden="true" />
+          Comidas
         </NavLink>
 
         <NavLink

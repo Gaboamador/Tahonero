@@ -1,7 +1,15 @@
 import { Link, useOutletContext } from 'react-router-dom';
-import { FiCalendar, FiChevronRight, FiCoffee, FiDollarSign, FiPackage, FiShoppingCart, FiUsers } from 'react-icons/fi';
+import {
+  FiCalendar,
+  FiChevronRight,
+  FiCoffee,
+  FiDollarSign,
+  FiPackage,
+  FiShoppingCart,
+  FiUsers,
+} from 'react-icons/fi';
 import { getGroupMembers } from '@/services/firebase/groupService';
-import { formatTripDateRange, getTripDaysCount } from '@/utils/tripUtils';
+import { formatTripDateRange, getTripDaysCount, getTripMealSlots } from '@/utils/tripUtils';
 import styles from './TripDashboardPage.module.scss';
 
 function TripDashboardPage() {
@@ -9,6 +17,12 @@ function TripDashboardPage() {
   const members = getGroupMembers(group);
   const daysCount = getTripDaysCount(group.startDate, group.endDate);
   const hasDates = daysCount > 0;
+  const mealSlots = getTripMealSlots({
+    startDate: group.startDate,
+    endDate: group.endDate,
+    firstMeal: group.firstMeal || 'lunch',
+    lastMeal: group.lastMeal || 'dinner',
+  });
 
   return (
     <div className={styles.page}>
@@ -18,7 +32,7 @@ function TripDashboardPage() {
           <div>
             <span>Fechas</span>
             <strong>{formatTripDateRange(group.startDate, group.endDate)}</strong>
-            <small>{hasDates ? `${daysCount} ${daysCount === 1 ? 'día' : 'días'}` : 'Podés cargarlas desde Configurar viaje'}</small>
+            <small>{hasDates ? `${daysCount} ${daysCount === 1 ? 'día' : 'días'} · ${mealSlots.length} comidas planificables` : 'Podés cargarlas desde Configurar viaje'}</small>
           </div>
         </article>
 
@@ -38,7 +52,7 @@ function TripDashboardPage() {
             <p className={styles.eyebrow}>Servicios</p>
             <h2>Módulos del viaje</h2>
           </div>
-          <p>Splitter pasa a ser uno de los servicios compartidos dentro de cada viaje.</p>
+          <p>Cada módulo comparte el mismo viaje y sus participantes.</p>
         </div>
 
         <div className={styles.modulesGrid}>
@@ -54,16 +68,17 @@ function TripDashboardPage() {
             <FiChevronRight className={styles.moduleArrow} aria-hidden="true" />
           </Link>
 
-          <article className={`${styles.moduleCard} ${styles.disabledModule}`}>
+          <Link to={`/viajes/${group.id}/comidas`} className={styles.moduleCard}>
             <div className={styles.moduleIcon}>
               <FiCoffee aria-hidden="true" />
             </div>
             <div className={styles.moduleContent}>
-              <span className={styles.soonBadge}>Próximamente</span>
+              <span className={styles.availableBadge}>Disponible</span>
               <h3>Comidas</h3>
-              <p>Planificá almuerzos y cenas para cada día del viaje.</p>
+              <p>Planificá almuerzos, cenas, recetas, extras y bebidas del viaje.</p>
             </div>
-          </article>
+            <FiChevronRight className={styles.moduleArrow} aria-hidden="true" />
+          </Link>
 
           <article className={`${styles.moduleCard} ${styles.disabledModule}`}>
             <div className={styles.moduleIcon}>

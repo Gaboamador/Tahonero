@@ -1,0 +1,597 @@
+@use "@/styles/refs" as *;
+
+.section {
+  display: grid;
+  gap: $space-md;
+  padding: $space-lg;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-sm;
+}
+
+.sectionHeader,
+.subsectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+
+  @media (min-width: 680px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.sectionHeader {
+  h2 {
+    color: $color-text-primary;
+    font-size: $font-size-heading-md;
+  }
+
+  p {
+    max-width: 660px;
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+  }
+}
+
+.subsectionHeader {
+  > div {
+    display: grid;
+    gap: $space-2xs;
+  }
+
+  strong {
+    color: $color-text-primary;
+  }
+
+  span {
+    color: $color-text-muted;
+    font-size: $font-size-body-xs;
+  }
+}
+
+.primaryButton,
+.secondaryButton,
+.dangerButton,
+.iconButton,
+.iconDangerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-xs;
+
+  font-weight: $font-weight-bold;
+  border-radius: $radius-md;
+
+  transition:
+    transform 160ms ease,
+    opacity 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+
+  &:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+.primaryButton,
+.secondaryButton,
+.dangerButton {
+  min-height: 40px;
+  padding: $space-xs $space-md;
+}
+
+.primaryButton {
+  color: $color-accent-primary-contrast;
+  background: $color-accent-primary;
+}
+
+.secondaryButton {
+  color: $color-text-primary;
+  background: $color-bg-elevated-2;
+  border: 1px solid $color-border;
+}
+
+.dangerButton {
+  color: $color-danger;
+  background: rgba($color-danger, 0.08);
+  border: 1px solid rgba($color-danger, 0.22);
+}
+
+.iconButton,
+.iconDangerButton {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  color: $color-text-muted;
+  background: transparent;
+  border-radius: $radius-pill;
+}
+
+.iconButton:hover {
+  color: $color-accent-primary;
+  background: rgba($color-accent-primary, 0.1);
+}
+
+.iconDangerButton:hover {
+  color: $color-danger;
+  background: rgba($color-danger, 0.1);
+}
+
+.field {
+  display: grid;
+  gap: $space-xs;
+  min-width: 0;
+
+  > span {
+    color: $color-text-secondary;
+    font-size: $font-size-label-sm;
+    font-weight: $font-weight-medium;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.72rem $space-sm;
+
+    color: $color-text-primary;
+
+    background: $color-bg-elevated;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+    outline: none;
+
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+
+    &:focus {
+      border-color: rgba($color-accent-primary, 0.72);
+      box-shadow: 0 0 0 3px rgba($color-accent-primary, 0.14);
+    }
+  }
+}
+
+.formCard {
+  display: grid;
+  gap: $space-md;
+  padding: $space-md;
+
+  background: $color-bg-elevated-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+}
+
+.formGrid,
+.twoColumnGrid {
+  display: grid;
+  gap: $space-md;
+
+  @media (min-width: 620px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.formActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-xs;
+}
+
+.error,
+.infoBox {
+  padding: $space-sm;
+  font-size: $font-size-body-sm;
+  border-radius: $radius-md;
+}
+
+.error {
+  color: $color-danger;
+  background: rgba($color-danger, 0.08);
+  border: 1px solid rgba($color-danger, 0.22);
+}
+
+.infoBox {
+  color: $color-text-secondary;
+  background: rgba($color-accent-secondary, 0.08);
+  border: 1px solid rgba($color-accent-secondary, 0.22);
+}
+
+.compactEmptyState,
+.emptyState {
+  color: $color-text-muted;
+  text-align: center;
+
+  background: $color-bg-elevated-2;
+  border: 1px dashed $color-border-strong;
+  border-radius: $radius-lg;
+}
+
+.compactEmptyState {
+  padding: $space-md;
+  font-size: $font-size-body-sm;
+}
+
+.emptyState {
+  display: grid;
+  gap: $space-xs;
+  padding: $space-xl $space-md;
+
+  strong {
+    color: $color-text-primary;
+  }
+}
+
+.ingredientsEditor {
+  display: grid;
+  gap: $space-sm;
+}
+
+.ingredientRows {
+  display: grid;
+  gap: $space-sm;
+}
+
+.ingredientRow {
+  display: grid;
+  gap: $space-sm;
+  align-items: end;
+  padding: $space-sm;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+
+  @media (min-width: 720px) {
+    grid-template-columns: minmax(0, 1.4fr) minmax(90px, 0.55fr) minmax(110px, 0.6fr) minmax(0, 1.1fr) auto;
+  }
+}
+
+.cardsList {
+  display: grid;
+  gap: $space-sm;
+}
+
+.itemCard {
+  display: grid;
+  gap: $space-sm;
+  padding: $space-md;
+
+  background: $color-bg-elevated-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+}
+
+.itemHeader {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+
+  @media (min-width: 620px) {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+}
+
+.itemTitle {
+  display: grid;
+  gap: $space-2xs;
+  min-width: 0;
+
+  h3 {
+    color: $color-text-primary;
+    font-size: $font-size-body;
+  }
+
+  p,
+  span {
+    color: $color-text-muted;
+    font-size: $font-size-body-xs;
+  }
+}
+
+.itemActions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: $space-2xs;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-xs;
+}
+
+.metaBadge,
+.accentBadge,
+.warmBadge {
+  padding: $space-2xs $space-xs;
+
+  font-size: $font-size-label-xs;
+  font-weight: $font-weight-bold;
+
+  border-radius: $radius-pill;
+}
+
+.metaBadge {
+  color: $color-text-secondary;
+  background: rgba($color-text-muted, 0.1);
+}
+
+.accentBadge {
+  color: $color-accent-secondary;
+  background: rgba($color-accent-secondary, 0.1);
+}
+
+.warmBadge {
+  color: $color-accent-warm;
+  background: rgba($color-accent-warm, 0.1);
+}
+
+.ingredientSummary {
+  display: grid;
+  gap: $space-xs;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: $space-md;
+
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+
+    span:last-child {
+      color: $color-text-muted;
+      white-space: nowrap;
+    }
+  }
+}
+
+.dayList {
+  display: grid;
+  gap: $space-md;
+}
+
+.dayCard {
+  display: grid;
+  gap: $space-sm;
+  padding: $space-md;
+
+  background: $color-bg-elevated-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+}
+
+.dayHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $space-xs;
+
+  h3 {
+    color: $color-text-primary;
+    font-size: $font-size-heading-sm;
+    text-transform: capitalize;
+  }
+
+  span {
+    color: $color-text-muted;
+    font-size: $font-size-body-xs;
+  }
+}
+
+.slotsGrid {
+  display: grid;
+  gap: $space-sm;
+
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.slotCard {
+  display: grid;
+  gap: $space-sm;
+  padding: $space-sm;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+}
+
+.slotHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-sm;
+
+  strong {
+    color: $color-text-primary;
+  }
+
+  span {
+    color: $color-text-muted;
+    font-size: $font-size-label-xs;
+    font-weight: $font-weight-bold;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+}
+
+.slotControls {
+  display: grid;
+  gap: $space-xs;
+}
+
+.customRow {
+  display: grid;
+  gap: $space-xs;
+
+  @media (min-width: 560px) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+}
+
+.checkboxList {
+  display: grid;
+  gap: $space-xs;
+
+  @media (min-width: 560px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.checkboxItem {
+  display: flex;
+  align-items: center;
+  gap: $space-xs;
+  padding: $space-xs $space-sm;
+
+  color: $color-text-secondary;
+  font-size: $font-size-body-sm;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+
+  input {
+    width: 1rem;
+    height: 1rem;
+    accent-color: $color-accent-primary;
+  }
+}
+
+.totalPreview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: $space-xs;
+  padding: $space-sm;
+
+  background: rgba($color-accent-secondary, 0.08);
+  border: 1px solid rgba($color-accent-secondary, 0.22);
+  border-radius: $radius-md;
+
+  span {
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+  }
+
+  strong {
+    color: $color-accent-secondary;
+    font-size: $font-size-heading-sm;
+  }
+}
+
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-xs;
+}
+
+.inlineCheckbox {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-xs;
+  padding: $space-sm;
+
+  color: $color-text-secondary;
+  font-size: $font-size-body-sm;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+
+  input {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.1rem;
+    accent-color: $color-accent-primary;
+  }
+}
+
+.textLink {
+  color: $color-accent-primary;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-bold;
+}
+
+.libraryList {
+  display: grid;
+  gap: $space-xs;
+}
+
+.libraryRow {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+  padding: $space-sm;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+
+  @media (min-width: 620px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  > div {
+    display: grid;
+    gap: $space-2xs;
+  }
+
+  strong {
+    color: $color-text-primary;
+  }
+
+  span {
+    color: $color-text-muted;
+    font-size: $font-size-body-xs;
+  }
+}
+
+.ingredientSummary small {
+  color: $color-text-muted;
+  font-size: inherit;
+}
+
+.compactTextButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2xs;
+
+  min-height: 34px;
+  padding: $space-2xs $space-sm;
+
+  color: $color-accent-secondary;
+  font-size: $font-size-label-sm;
+  font-weight: $font-weight-bold;
+
+  background: rgba($color-accent-secondary, 0.08);
+  border: 1px solid rgba($color-accent-secondary, 0.2);
+  border-radius: $radius-pill;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}

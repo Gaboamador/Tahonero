@@ -1,0 +1,75 @@
+@use "@/styles/refs" as *;
+
+.page {
+  display: grid;
+  gap: $space-lg;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: $space-xs;
+
+  padding: $space-xs $space-sm;
+
+  color: $color-text-secondary;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-bold;
+
+  border-radius: $radius-pill;
+
+  &:hover {
+    color: $color-text-primary;
+    background: $color-bg-elevated-2;
+  }
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+  padding: $space-lg;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-sm;
+
+  @media (min-width: 720px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  h1 {
+    margin-bottom: $space-xs;
+    color: $color-text-primary;
+    font-family: $font-family-display;
+    font-size: $font-size-heading-lg;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+  }
+
+  p {
+    max-width: 680px;
+    color: $color-text-secondary;
+  }
+}
+
+.eyebrow {
+  margin-bottom: $space-xs;
+  color: $color-accent-primary !important;
+  font-size: $font-size-label-sm;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.loading {
+  padding: $space-md;
+  color: $color-text-secondary;
+  text-align: center;
+}
