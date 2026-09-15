@@ -58,7 +58,7 @@ function ExpensesPage() {
     <div className={styles.page}>
       <div className={styles.sectionHeader}>
         <div>
-          <p className={styles.eyebrow}>Splitter</p>
+          <p className={styles.eyebrow}>Tahonero</p>
           <h2>Gastos del viaje</h2>
           <p>Balances, movimientos y pagos entre participantes.</p>
         </div>

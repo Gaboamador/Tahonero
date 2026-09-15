@@ -64,7 +64,7 @@ function RegisterPage() {
     <main className={styles.authPage}>
       <section className={styles.card}>
         <div className={styles.header}>
-          <p className={styles.eyebrow}>Splitter</p>
+          <p className={styles.eyebrow}>Tahonero</p>
           <h1>Crear cuenta</h1>
           <p>Creá tu usuario para empezar a dividir gastos sin límites diarios.</p>
         </div>

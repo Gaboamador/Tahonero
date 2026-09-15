@@ -234,7 +234,7 @@ function EditGroupPage() {
 
         {!group.startDate || !group.endDate ? (
           <p className={styles.legacyHint}>
-            Este viaje viene de la versión anterior de Splitter. Podés seguir usándolo sin fechas y cargarlas cuando quieras.
+            Este viaje viene de la versión anterior de Tahonero. Podés seguir usándolo sin fechas y cargarlas cuando quieras.
           </p>
         ) : null}
 

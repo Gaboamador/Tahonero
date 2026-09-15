@@ -63,7 +63,7 @@ function LoginPage() {
     <main className={styles.authPage}>
       <section className={styles.card}>
         <div className={styles.header}>
-          <p className={styles.eyebrow}>Splitter</p>
+          <p className={styles.eyebrow}>Tahonero</p>
           <h1>Iniciar sesión</h1>
           <p>Entrá para cargar gastos compartidos y ver quién le debe a quién.</p>
         </div>
