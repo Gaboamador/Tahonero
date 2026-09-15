@@ -16,13 +16,13 @@ function AppLayout() {
       <header className={styles.header}>
         <NavLink to="/" className={styles.brand}>
           <img
-            src="/icons/icon.svg"
+            src="/icons/icon_variante.svg"
             alt=""
             className={styles.brandIcon}
             aria-hidden="true"
           />
 
-          <span>plitter</span>
+          <span>TAHONERO</span>
         </NavLink>
 
         <div className={styles.userArea}>

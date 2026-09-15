@@ -1,7 +1,7 @@
 {
   "name": "Tahonero",
   "short_name": "Tahonero",
-  "description": "Dividí gastos compartidos y mantené claros los balances de cada grupo.",
+  "description": "Organizá tus viajes, gastos, comidas, compras y toda la información útil en un solo lugar.",
   "lang": "es-AR",
   "dir": "ltr",
   "id": "/",
@@ -9,10 +9,10 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#080d18",
-  "background_color": "#080d18",
+  "theme_color": "#0b0c0d",
+  "background_color": "#0b0c0d",
   "categories": [
-    "finance",
+    "travel",
     "utilities",
     "productivity"
   ],

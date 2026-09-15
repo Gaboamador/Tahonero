@@ -16,7 +16,7 @@
   gap: $space-md;
 
   min-height: $header-height-sm;
-  padding: $space-sm $container-padding-sm;
+  padding: $container-padding-xs;
 
   background: rgba($color-bg-elevated, 0.86);
   border-bottom: 1px solid rgba($color-border-strong, 0.72);
@@ -32,14 +32,30 @@
 
 .brand {
   display: inline-flex;
+  flex: 1;
   align-items: center;
-  gap: 0.05rem;
+  gap: $space-md;
 
   color: #dbeafe;
   font-family: $font-family-display;
   font-size: $font-size-heading-sm;
   font-weight: $font-weight-bold;
   letter-spacing: -0.03em;
+
+  span {
+    flex: 1;
+    text-align: center;
+  }
+
+  @media (min-width: 768px) {
+    flex: 0 0 auto;
+    gap: $container-padding-md;
+
+    span {
+      flex: 0 0 auto;
+      text-align: left;
+    }
+  }
 }
 
 .brandIcon {
@@ -47,7 +63,7 @@
   flex: 0 0 auto;
 
   width: auto;
-  height: 1.8rem;
+  height: 3rem;
 }
 
 .userArea {
