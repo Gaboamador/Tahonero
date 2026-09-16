@@ -329,16 +329,26 @@ export async function saveEmpanadaDistribution({
   groupId,
   order,
   allocations,
+  slotIds = [],
   flavorIds,
   currentUserUid,
 }) {
   if (!order?.memberId) throw new Error('Primero guardá el pedido.');
+
+  const allowedSlotIds = new Set(slotIds);
+  const cleanAllocations = Object.fromEntries(
+    Object.entries(allocations || {}).filter(([slotId]) => allowedSlotIds.has(slotId)),
+  );
+  const cleanConsumed = Object.fromEntries(
+    Object.entries(order.consumed || {}).filter(([slotId]) => allowedSlotIds.has(slotId)),
+  );
+
   return saveEmpanadaOrder({
     groupId,
     memberId: order.memberId,
     items: order.items || {},
-    allocations,
-    consumed: order.consumed || {},
+    allocations: cleanAllocations,
+    consumed: cleanConsumed,
     flavorIds,
     currentUserUid,
   });

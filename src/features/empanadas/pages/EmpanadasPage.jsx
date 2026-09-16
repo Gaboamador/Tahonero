@@ -148,18 +148,20 @@ function EmpanadasPage() {
 
   const managedOrder = orders.find((order) => order.memberId === managedMemberId) || null;
   const managedMember = members.find((member) => member.memberId === managedMemberId) || null;
+  const configuredSlotIds = useMemo(() => config?.mealSlotIds || [], [config]);
 
   useEffect(() => {
+    const allowedSlotIds = new Set(configuredSlotIds);
+
     setOrderItems({ ...(managedOrder?.items || {}) });
     setAllocations(
       Object.fromEntries(
-        Object.entries(managedOrder?.allocations || {}).map(([slotId, slotMap]) => [
-          slotId,
-          { ...slotMap },
-        ]),
+        Object.entries(managedOrder?.allocations || {})
+          .filter(([slotId]) => allowedSlotIds.has(slotId))
+          .map(([slotId, slotMap]) => [slotId, { ...slotMap }]),
       ),
     );
-  }, [managedMemberId, managedOrder]);
+  }, [managedMemberId, managedOrder, configuredSlotIds]);
 
   const flavors = config?.flavors || [];
   const flavorIds = flavors.map((flavor) => flavor.id);
@@ -169,6 +171,9 @@ function EmpanadasPage() {
     return `${flavor.code} ${flavor.name}`.toLocaleLowerCase('es-AR').includes(query);
   });
   const orderedFlavors = flavors.filter((flavor) => parseEmpanadaCount(orderItems[flavor.id]) > 0);
+  const persistedOrderedFlavors = flavors.filter(
+    (flavor) => parseEmpanadaCount(managedOrder?.items?.[flavor.id]) > 0,
+  );
   const totals = useMemo(
     () => buildEmpanadaTotals({ config, orders, members }),
     [config, orders, members],
@@ -186,16 +191,23 @@ function EmpanadasPage() {
   );
   const allOrdersFinalized = members.length > 0 && pendingOrderMembers.length === 0;
   const managedOrderIsFinalized = managedOrder?.isFinalized === true;
-  const configuredSlotIds = useMemo(() => config?.mealSlotIds || [], [config]);
+  const hasUnsavedOrderChanges = Boolean(
+    managedOrder &&
+      flavors.some(
+        (flavor) =>
+          parseEmpanadaCount(orderItems[flavor.id]) !==
+          parseEmpanadaCount(managedOrder.items?.[flavor.id]),
+      ),
+  );
   const displayedDistributionSlotId = activeDistributionSlotId || configuredSlotIds[0] || '';
-  const managedOrderedTotal = orderedFlavors.reduce(
-    (sum, flavor) => sum + parseEmpanadaCount(orderItems[flavor.id]),
+  const managedOrderedTotal = persistedOrderedFlavors.reduce(
+    (sum, flavor) => sum + parseEmpanadaCount(managedOrder?.items?.[flavor.id]),
     0,
   );
   const managedAllocatedTotal = configuredSlotIds.reduce(
     (slotTotal, slotId) =>
       slotTotal +
-      orderedFlavors.reduce(
+      persistedOrderedFlavors.reduce(
         (flavorTotal, flavor) =>
           flavorTotal + parseEmpanadaCount(allocations?.[slotId]?.[flavor.id]),
         0,
@@ -203,6 +215,15 @@ function EmpanadasPage() {
     0,
   );
   const managedUnassignedTotal = Math.max(0, managedOrderedTotal - managedAllocatedTotal);
+  const managedConfiguredAllocationTotal = configuredSlotIds.reduce(
+    (slotTotal, slotId) =>
+      slotTotal +
+      Object.values(managedOrder?.allocations?.[slotId] || {}).reduce(
+        (sum, value) => sum + parseEmpanadaCount(value),
+        0,
+      ),
+    0,
+  );
 
   useEffect(() => {
     if (configuredSlotIds.length === 0) {
@@ -216,21 +237,32 @@ function EmpanadasPage() {
   }, [activeDistributionSlotId, configuredSlotIds]);
 
   const setAllocationCount = (slotId, flavorId, nextValue) => {
-    const ordered = parseEmpanadaCount(orderItems[flavorId]);
-    const allocatedElsewhere = configuredSlotIds.reduce((sum, currentSlotId) => {
-      if (currentSlotId === slotId) return sum;
-      return sum + parseEmpanadaCount(allocations?.[currentSlotId]?.[flavorId]);
-    }, 0);
-    const maxForSlot = Math.max(0, ordered - allocatedElsewhere);
-    const nextCount = Math.min(parseEmpanadaCount(nextValue), maxForSlot);
+    const ordered = parseEmpanadaCount(managedOrder?.items?.[flavorId]);
 
-    setAllocations((current) => ({
-      ...current,
-      [slotId]: {
-        ...(current[slotId] || {}),
-        [flavorId]: nextCount,
-      },
-    }));
+    setAllocations((current) => {
+      const allocatedElsewhere = configuredSlotIds.reduce((sum, currentSlotId) => {
+        if (currentSlotId === slotId) return sum;
+        return sum + parseEmpanadaCount(current?.[currentSlotId]?.[flavorId]);
+      }, 0);
+      const maxForSlot = Math.max(0, ordered - allocatedElsewhere);
+      const nextCount = Math.min(parseEmpanadaCount(nextValue), maxForSlot);
+      const nextSlot = { ...(current[slotId] || {}) };
+
+      if (nextCount > 0) {
+        nextSlot[flavorId] = nextCount;
+      } else {
+        delete nextSlot[flavorId];
+      }
+
+      const next = { ...current };
+      if (Object.keys(nextSlot).length > 0) {
+        next[slotId] = nextSlot;
+      } else {
+        delete next[slotId];
+      }
+
+      return next;
+    });
   };
 
   const remainingByMember = useMemo(
@@ -427,6 +459,11 @@ function EmpanadasPage() {
 
   const handleSaveDistribution = async () => {
     if (!managedOrder) return;
+    if (hasUnsavedOrderChanges) {
+      setError('Guardá los cambios del pedido antes de repartirlo entre comidas.');
+      return;
+    }
+
     setIsSaving(true);
     setError('');
     try {
@@ -434,6 +471,7 @@ function EmpanadasPage() {
         groupId: group.id,
         order: managedOrder,
         allocations,
+        slotIds: configuredSlotIds,
         flavorIds,
         currentUserUid: currentUser.uid,
       });
@@ -762,9 +800,12 @@ function EmpanadasPage() {
 
             {!managedOrder ? <div className={styles.emptyState}>Primero guardá el pedido.</div> : null}
             {managedOrder && (config.mealSlotIds || []).length === 0 ? <div className={styles.emptyState}>Primero definan en qué comidas van a comer empanadas.</div> : null}
-            {managedOrder && (config.mealSlotIds || []).length > 0 && orderedFlavors.length === 0 ? <div className={styles.emptyState}>Este pedido todavía no tiene empanadas.</div> : null}
+            {managedOrder && (config.mealSlotIds || []).length > 0 && persistedOrderedFlavors.length === 0 ? <div className={styles.emptyState}>Este pedido todavía no tiene empanadas.</div> : null}
+            {hasUnsavedOrderChanges ? (
+              <div className={styles.emptyState}>Guardá los cambios del pedido antes de modificar el reparto.</div>
+            ) : null}
 
-            {managedOrder && (config.mealSlotIds || []).length > 0 && orderedFlavors.length > 0 ? (
+            {managedOrder && !hasUnsavedOrderChanges && (config.mealSlotIds || []).length > 0 && persistedOrderedFlavors.length > 0 ? (
               <div className={styles.distributionWrap}>
                 <div className={styles.distributionTable} style={{ '--slot-count': Math.max(1, configuredSlotIds.length) }}>
                   <div className={styles.distributionHeader}>
@@ -772,8 +813,8 @@ function EmpanadasPage() {
                     {configuredSlotIds.map((slotId) => <span key={slotId}>{getMealSlotLabel(mealSlotsMap[slotId])}</span>)}
                     <span>Sin asignar</span>
                   </div>
-                  {orderedFlavors.map((flavor) => {
-                    const ordered = parseEmpanadaCount(orderItems[flavor.id]);
+                  {persistedOrderedFlavors.map((flavor) => {
+                    const ordered = parseEmpanadaCount(managedOrder.items?.[flavor.id]);
                     const allocated = configuredSlotIds.reduce(
                       (sum, slotId) => sum + parseEmpanadaCount(allocations?.[slotId]?.[flavor.id]),
                       0,
@@ -801,7 +842,7 @@ function EmpanadasPage() {
                 <div className={styles.mobileDistribution}>
                   <div className={styles.distributionSlotTabs} role="tablist" aria-label="Comida a repartir">
                     {configuredSlotIds.map((slotId) => {
-                      const slotTotal = orderedFlavors.reduce(
+                      const slotTotal = persistedOrderedFlavors.reduce(
                         (sum, flavor) => sum + parseEmpanadaCount(allocations?.[slotId]?.[flavor.id]),
                         0,
                       );
@@ -822,8 +863,8 @@ function EmpanadasPage() {
                   </div>
 
                   <div className={styles.mobileDistributionList}>
-                    {orderedFlavors.map((flavor) => {
-                      const ordered = parseEmpanadaCount(orderItems[flavor.id]);
+                    {persistedOrderedFlavors.map((flavor) => {
+                      const ordered = parseEmpanadaCount(managedOrder.items?.[flavor.id]);
                       const currentCount = parseEmpanadaCount(
                         allocations?.[displayedDistributionSlotId]?.[flavor.id],
                       );
@@ -900,7 +941,7 @@ function EmpanadasPage() {
               </div>
             </div>
 
-            {!managedOrder || Object.keys(managedOrder.allocations || {}).length === 0 ? (
+            {!managedOrder || managedConfiguredAllocationTotal === 0 ? (
               <div className={styles.emptyState}>Todavía no hay empanadas repartidas entre comidas.</div>
             ) : (
               <div className={styles.consumptionMeals}>
@@ -952,80 +993,23 @@ function EmpanadasPage() {
             <div className={styles.panelHeader}>
               <div className={styles.panelIcon}><FiPackage aria-hidden="true" /></div>
               <div>
-                <h3>6. Pedido general y caja</h3>
-                <p>{totalOrdered} pedidas · {totalRemaining} todavía disponibles.</p>
+                <h3>6. Qué queda en la caja</h3>
+                <p>
+                  {totalRemaining} {totalRemaining === 1 ? 'empanada disponible' : 'empanadas todavía disponibles'}.
+                </p>
               </div>
             </div>
 
-            {totals.length === 0 ? <div className={styles.emptyState}>Todavía nadie cargó empanadas.</div> : (
+            {totals.length === 0 ? (
+              <div className={styles.emptyState}>Todavía nadie cargó empanadas.</div>
+            ) : totalRemaining === 0 ? (
+              <div className={styles.emptyState}>No quedan empanadas en la caja.</div>
+            ) : (
               <>
-                <div className={styles.generalSectionHeader}>
-                  <div>
-                    <h4>Pedido general</h4>
-                    <p>Qué pidió cada persona y cuánto queda disponible por gusto.</p>
-                  </div>
-                </div>
-
-                <div className={styles.generalTableWrap}>
-                  <table className={styles.generalTable}>
-                    <thead>
-                      <tr>
-                        <th>Sigla</th><th>Empanada</th><th>Total</th><th>Quedan</th>
-                        {members.map((member) => <th key={member.memberId}>{member.displayName || member.email}</th>)}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {totals.map((flavor) => (
-                        <tr key={flavor.id}>
-                          <td><strong>{flavor.code}</strong></td>
-                          <td>{flavor.name}</td>
-                          <td><strong>{flavor.total}</strong></td>
-                          <td className={flavor.remaining > 0 ? styles.remaining : styles.finished}>{flavor.remaining}</td>
-                          {members.map((member) => <td key={member.memberId}>{flavor.byMember[member.memberId] || ''}</td>)}
-                        </tr>
-                      ))}
-                      <tr className={styles.totalRow}>
-                        <td>—</td><td>TOTAL</td><td>{totalOrdered}</td><td>{totalRemaining}</td>
-                        {members.map((member) => {
-                          const order = orders.find((item) => item.memberId === member.memberId);
-                          return <td key={member.memberId}>{order ? getOrderTotal(order) : ''}</td>;
-                        })}
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className={styles.generalMobileList}>
-                  {totals.map((flavor) => (
-                    <article key={flavor.id} className={styles.generalMobileCard}>
-                      <div className={styles.generalMobileCardHeader}>
-                        <div><strong>{flavor.code}</strong><span>{flavor.name}</span></div>
-                        <div className={styles.generalMobileTotals}>
-                          <span>{flavor.total} pedidas</span>
-                          <b className={flavor.remaining > 0 ? styles.remaining : styles.finished}>
-                            {flavor.remaining} quedan
-                          </b>
-                        </div>
-                      </div>
-                      <ul>
-                        {members.map((member) => {
-                          const count = flavor.byMember[member.memberId] || 0;
-                          return count > 0 ? (
-                            <li key={member.memberId}>
-                              <span>{member.displayName || member.email}</span>
-                              <strong>{count}</strong>
-                            </li>
-                          ) : null;
-                        })}
-                      </ul>
-                    </article>
-                  ))}
-                </div>
-
                 <div className={styles.boxSectionHeader}>
                   <div>
-                    <h4>Qué queda en la caja</h4>
-                    <p>{totalRemaining} empanadas todavía disponibles.</p>
+                    <h4>Agrupar disponibles</h4>
+                    <p>Elegí cómo querés ver las empanadas que quedan.</p>
                   </div>
                   <div className={styles.viewToggle} aria-label="Agrupar caja">
                     <button
@@ -1045,9 +1029,7 @@ function EmpanadasPage() {
                   </div>
                 </div>
 
-                {totalRemaining === 0 ? (
-                  <div className={styles.emptyState}>No quedan empanadas en la caja.</div>
-                ) : boxViewMode === 'flavor' ? (
+                {boxViewMode === 'flavor' ? (
                   <div className={styles.boxGrid}>
                     {totals.filter((flavor) => flavor.remaining > 0).map((flavor) => (
                       <article key={flavor.id} className={styles.boxCard}>

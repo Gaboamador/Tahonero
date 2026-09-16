@@ -122,7 +122,7 @@ export function validateOrderDraft({ items = {}, allocations = {}, consumed = {}
   Object.entries(allocations || {}).forEach(([slotId, slotMap]) => {
     const cleanSlotMap = {};
     Object.entries(slotMap || {}).forEach(([flavorId, value]) => {
-      if (!allowedFlavorIds.has(flavorId)) return;
+      if (!allowedFlavorIds.has(flavorId) || !(flavorId in cleanItems)) return;
       const count = parseEmpanadaCount(value);
       if (count > 0) cleanSlotMap[flavorId] = count;
     });
