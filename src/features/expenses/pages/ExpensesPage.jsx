@@ -4,6 +4,7 @@ import { FiPlusCircle, FiTrendingUp } from 'react-icons/fi';
 import { TfiReceipt } from 'react-icons/tfi';
 import ExpenseCard from '@/components/ExpenseCard';
 import SettlementSummary from '@/components/SettlementSummary';
+import TripModuleHeader from '@/features/trips/components/TripModuleHeader';
 import { useGroupExpenses } from '@/hooks/useGroupExpenses';
 import styles from './ExpensesPage.module.scss';
 
@@ -56,18 +57,17 @@ function ExpensesPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.sectionHeader}>
-        <div>
-          <p className={styles.eyebrow}>Tahonero</p>
-          <h2>Gastos del viaje</h2>
-          <p>Balances, movimientos y pagos entre participantes.</p>
-        </div>
-
-        <Link to={`/viajes/${group.id}/gastos/nuevo`} className={styles.primaryAction}>
-          <FiPlusCircle aria-hidden="true" />
-          Agregar gasto
-        </Link>
-      </div>
+      <TripModuleHeader
+        moduleId="expenses"
+        title="Gastos del viaje"
+        description="Balances, movimientos y pagos entre participantes."
+        action={
+          <Link to={`/viajes/${group.id}/gastos/nuevo`} className={styles.primaryAction}>
+            <FiPlusCircle aria-hidden="true" />
+            Agregar gasto
+          </Link>
+        }
+      />
 
       <article className={styles.panel}>
         <div className={styles.panelHeader}>

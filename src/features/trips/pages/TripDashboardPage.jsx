@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import {
   FiAlertTriangle,
+  FiArchive,
   FiCalendar,
   FiCheckCircle,
   FiChevronRight,
@@ -14,6 +15,8 @@ import {
 } from 'react-icons/fi';
 import { useEmpanadaModuleData } from '@/features/empanadas/hooks/useEmpanadaModuleData';
 import { getOrderTotal } from '@/features/empanadas/utils/empanadaUtils';
+import { useTripLeftovers } from '@/features/leftovers/hooks/useTripLeftovers';
+import { buildLeftoverSummary } from '@/features/leftovers/utils/tripLeftoversUtils';
 import { MEAL_TYPE_LABELS } from '@/features/meals/constants/mealConstants';
 import { useMealModuleData } from '@/features/meals/hooks/useMealModuleData';
 import { useShoppingState } from '@/features/shopping/hooks/useShoppingState';
@@ -40,6 +43,14 @@ function capitalize(value) {
 
 function formatMissingMeal(slot) {
   return `${capitalize(formatTripDay(slot.date))} · ${MEAL_TYPE_LABELS[slot.mealType]}`;
+}
+
+function getLocalDateString() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function TripDashboardPage() {
@@ -82,6 +93,11 @@ function TripDashboardPage() {
     isLoading: empanadasLoading,
     error: empanadasError,
   } = useEmpanadaModuleData(group.id);
+  const {
+    records: leftoverRecords,
+    isLoading: leftoversLoading,
+    error: leftoversError,
+  } = useTripLeftovers(group.id);
 
   const balanceSummary = useMemo(
     () => getGroupBalanceSummary({ expenses, membersMap: group.membersMap || {} }),
@@ -125,6 +141,11 @@ function TripDashboardPage() {
   );
   const pendingShoppingCount = shoppingItems.length - checkedShoppingCount;
   const unassignedPlaceCount = shoppingItems.filter((item) => !item.purchasePlace).length;
+  const leftoverSummary = useMemo(
+    () => buildLeftoverSummary({ shoppingItems, shoppingState, records: leftoverRecords }),
+    [shoppingItems, shoppingState, leftoverRecords],
+  );
+  const tripHasEnded = Boolean(group.endDate) && getLocalDateString() >= group.endDate;
 
   const ordersByMember = useMemo(
     () => Object.fromEntries(empanadaOrders.map((order) => [order.memberId, order])),
@@ -140,7 +161,7 @@ function TripDashboardPage() {
 
   const shoppingLoading = mealsLoading || shoppingStateLoading;
   const dashboardLoading =
-    expensesLoading || mealsLoading || shoppingStateLoading || empanadasLoading;
+    expensesLoading || mealsLoading || shoppingStateLoading || empanadasLoading || leftoversLoading;
 
   const alerts = useMemo(() => {
     const nextAlerts = [];
@@ -218,6 +239,23 @@ function TripDashboardPage() {
       });
     }
 
+    if (
+      tripHasEnded &&
+      !shoppingLoading &&
+      !leftoversLoading &&
+      leftoverSummary.purchasedCount > 0 &&
+      leftoverSummary.pendingCount > 0
+    ) {
+      nextAlerts.push({
+        id: 'pending-leftovers',
+        icon: FiArchive,
+        title: `${leftoverSummary.pendingCount} ${leftoverSummary.pendingCount === 1 ? 'producto pendiente de revisar' : 'productos pendientes de revisar'} en Sobras`,
+        detail: 'Registrá qué quedó de lo comprado para conservar una referencia útil para el próximo viaje.',
+        to: `/viajes/${group.id}/sobras`,
+        action: 'Revisar sobras',
+      });
+    }
+
     if (!expensesLoading && balanceSummary.settlements.length > 0) {
       nextAlerts.push({
         id: 'pending-settlements',
@@ -243,12 +281,16 @@ function TripDashboardPage() {
     empanadasLoading,
     empanadaConfig,
     pendingEmpanadaMembers,
+    tripHasEnded,
+    leftoversLoading,
+    leftoverSummary.purchasedCount,
+    leftoverSummary.pendingCount,
     expensesLoading,
     balanceSummary.settlements.length,
     group.id,
   ]);
 
-  const dataErrors = [expensesError, mealsError, shoppingStateError, empanadasError].filter(Boolean);
+  const dataErrors = [expensesError, mealsError, shoppingStateError, empanadasError, leftoversError].filter(Boolean);
 
   return (
     <div className={styles.page}>
@@ -286,7 +328,7 @@ function TripDashboardPage() {
         </div>
 
         <div className={styles.statusGrid}>
-          <Link to={`/viajes/${group.id}/gastos`} className={styles.statusCard}>
+          <Link to={`/viajes/${group.id}/gastos`} className={styles.statusCard} data-module="expenses">
             <div className={styles.statusIcon}>
               <FiDollarSign aria-hidden="true" />
             </div>
@@ -310,7 +352,7 @@ function TripDashboardPage() {
             <FiChevronRight className={styles.statusArrow} aria-hidden="true" />
           </Link>
 
-          <Link to={`/viajes/${group.id}/comidas`} className={styles.statusCard}>
+          <Link to={`/viajes/${group.id}/comidas`} className={styles.statusCard} data-module="meals">
             <div className={styles.statusIcon}>
               <FiCoffee aria-hidden="true" />
             </div>
@@ -339,7 +381,7 @@ function TripDashboardPage() {
             <FiChevronRight className={styles.statusArrow} aria-hidden="true" />
           </Link>
 
-          <Link to={`/viajes/${group.id}/compras`} className={styles.statusCard}>
+          <Link to={`/viajes/${group.id}/compras`} className={styles.statusCard} data-module="shopping">
             <div className={styles.statusIcon}>
               <FiShoppingCart aria-hidden="true" />
             </div>
@@ -368,7 +410,7 @@ function TripDashboardPage() {
             <FiChevronRight className={styles.statusArrow} aria-hidden="true" />
           </Link>
 
-          <Link to={`/viajes/${group.id}/empanadas`} className={styles.statusCard}>
+          <Link to={`/viajes/${group.id}/empanadas`} className={styles.statusCard} data-module="empanadas">
             <div className={styles.statusIcon}>
               <FiPackage aria-hidden="true" />
             </div>
@@ -393,6 +435,37 @@ function TripDashboardPage() {
                   <strong>Pedido incompleto</strong>
                   <small>
                     {pendingEmpanadaMembers.length} {pendingEmpanadaMembers.length === 1 ? 'persona pendiente' : 'personas pendientes'}
+                  </small>
+                </>
+              )}
+            </div>
+            <FiChevronRight className={styles.statusArrow} aria-hidden="true" />
+          </Link>
+
+          <Link to={`/viajes/${group.id}/sobras`} className={styles.statusCard} data-module="leftovers">
+            <div className={styles.statusIcon}>
+              <FiArchive aria-hidden="true" />
+            </div>
+            <div className={styles.statusContent}>
+              <span className={styles.statusLabel}>Sobras</span>
+              {leftoversLoading || shoppingLoading ? (
+                <strong>Cargando...</strong>
+              ) : leftoversError || mealsError || shoppingStateError ? (
+                <strong>No disponible</strong>
+              ) : leftoverSummary.purchasedCount === 0 ? (
+                <>
+                  <strong>Sin compras para revisar</strong>
+                  <small>Aparecen los productos marcados como comprados</small>
+                </>
+              ) : (
+                <>
+                  <strong>{leftoverSummary.reviewedCount}/{leftoverSummary.purchasedCount} revisados</strong>
+                  <small>
+                    {leftoverSummary.leftoverCount > 0
+                      ? `${leftoverSummary.leftoverCount} ${leftoverSummary.leftoverCount === 1 ? 'producto con sobrante' : 'productos con sobrantes'}`
+                      : leftoverSummary.pendingCount === 0
+                        ? 'Sin sobrantes registrados'
+                        : `${leftoverSummary.pendingCount} ${leftoverSummary.pendingCount === 1 ? 'pendiente' : 'pendientes'}`}
                   </small>
                 </>
               )}

@@ -1,0 +1,35 @@
+@use "@/styles/refs" as *;
+
+@mixin module-theme($color) {
+  --module-accent: #{$color};
+  --module-accent-soft: #{rgba($color, 0.1)};
+  --module-accent-soft-strong: #{rgba($color, 0.16)};
+  --module-accent-border: #{rgba($color, 0.32)};
+}
+
+@mixin module-themes {
+  &[data-module="summary"],
+  &[data-module="members"] {
+    @include module-theme($color-accent-primary);
+  }
+
+  &[data-module="expenses"] {
+    @include module-theme($color-accent-primary);
+  }
+
+  &[data-module="meals"] {
+    @include module-theme($color-accent-warm);
+  }
+
+  &[data-module="shopping"] {
+    @include module-theme($color-accent-secondary);
+  }
+
+  &[data-module="empanadas"] {
+    @include module-theme($color-accent-variant);
+  }
+
+  &[data-module="leftovers"] {
+    @include module-theme($color-accent-leftovers);
+  }
+}

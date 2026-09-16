@@ -60,7 +60,17 @@ function formatCombinedQuantity(baseQuantity, family) {
   return { quantity: baseQuantity, unit: family };
 }
 
-function addShoppingCandidate(itemsMap, { name, quantity, unit, purchasePlace = '', source }) {
+function addShoppingCandidate(
+  itemsMap,
+  {
+    name,
+    quantity,
+    unit,
+    purchasePlace = '',
+    source,
+    sourceGroup,
+  },
+) {
   const numericQuantity = Number(quantity) || 0;
   const cleanName = String(name || '').trim();
 
@@ -81,6 +91,7 @@ function addShoppingCandidate(itemsMap, { name, quantity, unit, purchasePlace = 
       family,
       baseQuantity: 0,
       sources: new Set(),
+      sourceGroups: new Map(),
     });
   }
 
@@ -89,6 +100,25 @@ function addShoppingCandidate(itemsMap, { name, quantity, unit, purchasePlace = 
 
   if (source) {
     item.sources.add(source);
+  }
+
+  if (sourceGroup?.key) {
+    if (!item.sourceGroups.has(sourceGroup.key)) {
+      item.sourceGroups.set(sourceGroup.key, {
+        key: sourceGroup.key,
+        type: sourceGroup.type || 'other',
+        label: sourceGroup.label || 'Otros',
+        baseQuantity: 0,
+        details: new Set(),
+      });
+    }
+
+    const group = item.sourceGroups.get(sourceGroup.key);
+    group.baseQuantity += baseQuantity;
+
+    if (sourceGroup.detailLabel) {
+      group.details.add(sourceGroup.detailLabel);
+    }
   }
 }
 
@@ -121,6 +151,11 @@ export function buildShoppingList({
         unit: ingredient.unit,
         purchasePlace: ingredient.purchasePlace,
         source: meal.name,
+        sourceGroup: {
+          key: `meal:${meal.id || normalizeText(meal.name)}`,
+          type: 'meal',
+          label: meal.name,
+        },
       });
     });
   });
@@ -133,6 +168,12 @@ export function buildShoppingList({
         unit: extra.unit,
         purchasePlace: extra.purchasePlace,
         source: 'Extra',
+        sourceGroup: {
+          key: 'extras',
+          type: 'extras',
+          label: 'Extras',
+          detailLabel: extra.name,
+        },
       });
       return;
     }
@@ -144,6 +185,12 @@ export function buildShoppingList({
         unit: ingredient.unit,
         purchasePlace: ingredient.purchasePlace,
         source: extra.name,
+        sourceGroup: {
+          key: 'extras',
+          type: 'extras',
+          label: 'Extras',
+          detailLabel: extra.name,
+        },
       });
     });
   });
@@ -155,6 +202,12 @@ export function buildShoppingList({
       unit: drinkPlan.unit,
       purchasePlace: drinkPlan.purchasePlace,
       source: 'Bebida',
+      sourceGroup: {
+        key: 'drinks',
+        type: 'drinks',
+        label: 'Bebidas',
+        detailLabel: drinkPlan.name,
+      },
     });
   });
 
@@ -163,6 +216,19 @@ export function buildShoppingList({
       const display = formatCombinedQuantity(item.baseQuantity, item.family);
       const itemKey = `item_${hashString(item.groupingKey)}`;
       const signature = `${itemKey}:${item.baseQuantity.toFixed(6)}`;
+      const sourceGroups = Array.from(item.sourceGroups.values()).map((group) => {
+        const groupDisplay = formatCombinedQuantity(group.baseQuantity, item.family);
+
+        return {
+          key: group.key,
+          type: group.type,
+          label: group.label,
+          quantity: groupDisplay.quantity,
+          unit: groupDisplay.unit,
+          quantityLabel: `${formatFoodQuantity(groupDisplay.quantity)} ${groupDisplay.unit}`,
+          details: Array.from(group.details).sort((a, b) => a.localeCompare(b, 'es')),
+        };
+      });
 
       return {
         itemKey,
@@ -173,6 +239,7 @@ export function buildShoppingList({
         unit: display.unit,
         quantityLabel: `${formatFoodQuantity(display.quantity)} ${display.unit}`,
         sources: Array.from(item.sources).sort((a, b) => a.localeCompare(b, 'es')),
+        sourceGroups,
       };
     })
     .sort((a, b) => {
@@ -213,6 +280,63 @@ export function groupShoppingItemsByPlace(items = []) {
 
     return a.label.localeCompare(b.label, 'es', { sensitivity: 'base' });
   });
+}
+
+export function groupShoppingItemsByRecipe(items = []) {
+  const groups = new Map();
+
+  items.forEach((item) => {
+    (item.sourceGroups || []).forEach((sourceGroup) => {
+      if (!groups.has(sourceGroup.key)) {
+        groups.set(sourceGroup.key, {
+          key: sourceGroup.key,
+          label: sourceGroup.label,
+          type: sourceGroup.type,
+          items: [],
+        });
+      }
+
+      groups.get(sourceGroup.key).items.push({
+        item,
+        quantity: sourceGroup.quantity,
+        unit: sourceGroup.unit,
+        quantityLabel: sourceGroup.quantityLabel,
+        details: sourceGroup.details,
+      });
+    });
+  });
+
+  const typeOrder = {
+    meal: 0,
+    extras: 1,
+    drinks: 2,
+    other: 3,
+  };
+
+  return Array.from(groups.values())
+    .map((group) => ({
+      ...group,
+      items: group.items.sort((a, b) => {
+        const nameDiff = a.item.name.localeCompare(b.item.name, 'es', { sensitivity: 'base' });
+
+        if (nameDiff !== 0) {
+          return nameDiff;
+        }
+
+        return (a.item.purchasePlace || '').localeCompare(b.item.purchasePlace || '', 'es', {
+          sensitivity: 'base',
+        });
+      }),
+    }))
+    .sort((a, b) => {
+      const typeDiff = (typeOrder[a.type] ?? typeOrder.other) - (typeOrder[b.type] ?? typeOrder.other);
+
+      if (typeDiff !== 0) {
+        return typeDiff;
+      }
+
+      return a.label.localeCompare(b.label, 'es', { sensitivity: 'base' });
+    });
 }
 
 export function isShoppingItemChecked(item, shoppingState = {}) {

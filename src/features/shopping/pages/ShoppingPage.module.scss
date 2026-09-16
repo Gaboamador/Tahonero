@@ -140,6 +140,90 @@
   }
 }
 
+.groupingBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-sm;
+  padding: $space-sm;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+
+  > span {
+    padding-left: $space-xs;
+    color: $color-text-muted;
+    font-size: $font-size-label-xs;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 520px) {
+    display: grid;
+    gap: $space-xs;
+
+    > span {
+      padding-left: 0;
+    }
+  }
+}
+
+.segmentedControl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $space-2xs;
+  padding: $space-2xs;
+
+  background: $color-bg-elevated-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: $space-xs;
+    min-height: 36px;
+    padding: $space-xs $space-md;
+
+    color: $color-text-secondary;
+    font: inherit;
+    font-size: $font-size-body-sm;
+    font-weight: $font-weight-medium;
+
+    background: transparent;
+    border: 0;
+    border-radius: calc(#{$radius-md} - 2px);
+    cursor: pointer;
+    transition:
+      color 160ms ease,
+      background 160ms ease,
+      box-shadow 160ms ease;
+
+    &:hover {
+      color: $color-text-primary;
+      background: $color-bg-elevated;
+    }
+
+    svg {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  .activeSegment {
+    color: $color-accent-secondary;
+    background: $color-bg-elevated;
+    box-shadow: $shadow-sm;
+  }
+
+  @media (max-width: 520px) {
+    width: 100%;
+  }
+}
+
 .placeList {
   display: grid;
   gap: $space-md;
@@ -215,6 +299,10 @@
     height: 1.05rem;
     accent-color: $color-accent-secondary;
   }
+
+  @media (max-width: 520px) {
+    padding-inline: $space-md;
+  }
 }
 
 .itemContent {
@@ -240,20 +328,33 @@
 }
 
 .quantity {
+  display: grid;
+  justify-items: end;
+  gap: $space-2xs;
   color: $color-text-primary;
-  font-size: $font-size-body-sm;
-  font-weight: $font-weight-bold;
   white-space: nowrap;
+
+  strong {
+    font-size: $font-size-body-sm;
+    font-weight: $font-weight-bold;
+  }
+
+  small {
+    color: $color-text-muted;
+    font-size: $font-size-label-xs;
+    font-weight: $font-weight-medium;
+  }
 }
 
 .checkedItem {
   .itemContent strong,
-  .quantity {
+  .quantity strong {
     color: $color-text-muted;
     text-decoration: line-through;
   }
 
-  .itemContent small {
+  .itemContent small,
+  .quantity small {
     opacity: 0.7;
   }
 }

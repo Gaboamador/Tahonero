@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { FiLink, FiTrash2, FiUsers } from 'react-icons/fi';
 import AddMemberForm from '@/components/AddMemberForm';
 import AddRegisteredUserForm from '@/components/AddRegisteredUserForm';
+import TripModuleHeader from '@/features/trips/components/TripModuleHeader';
 import { useGroupExpenses } from '@/hooks/useGroupExpenses';
 import {
   getGroupMembers,
@@ -86,19 +87,24 @@ function TripMembersPage() {
 
   return (
     <div className={styles.page}>
+      <TripModuleHeader
+        moduleId="members"
+        title="Participantes"
+        description={
+          members.length === 1
+            ? '1 persona participa del viaje.'
+            : `${members.length} personas participan del viaje.`
+        }
+      />
+
       <section className={styles.panel}>
         <div className={styles.panelHeader}>
           <div className={styles.panelIcon}>
             <FiUsers aria-hidden="true" />
           </div>
           <div>
-            <p className={styles.eyebrow}>Viaje</p>
-            <h2>Participantes</h2>
-            <p>
-              {members.length === 1
-                ? '1 persona participa del viaje.'
-                : `${members.length} personas participan del viaje.`}
-            </p>
+            <h3>Personas del viaje</h3>
+            <p>Agregá participantes registrados o personas cargadas manualmente.</p>
           </div>
         </div>
 

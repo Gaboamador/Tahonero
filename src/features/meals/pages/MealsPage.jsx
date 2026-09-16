@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { getGroupMembers } from '@/services/firebase/groupService';
 import { getTripDaysCount, getTripMealSlots } from '@/utils/tripUtils';
 import { getTripRegisteredUserIds } from '@/utils/sharedLibraryUtils';
+import TripModuleHeader from '@/features/trips/components/TripModuleHeader';
 import styles from './MealsPage.module.scss';
 
 function MealsPage() {
@@ -71,15 +72,11 @@ function MealsPage() {
 
   return (
     <div className={styles.page}>
-      <section className={styles.hero}>
-        <div>
-          <p className={styles.eyebrow}>Comidas</p>
-          <h2>Plan alimentario del viaje</h2>
-          <p>
-            Organizá el calendario, importá recetas compartidas, agregá extras y calculá bebidas. Los lugares de compra quedan preparados para ordenar Compras.
-          </p>
-        </div>
-      </section>
+      <TripModuleHeader
+        moduleId="meals"
+        title="Plan alimentario del viaje"
+        description="Organizá el calendario, importá recetas compartidas, agregá extras y calculá bebidas. Los lugares de compra quedan preparados para ordenar Compras."
+      />
 
       <section className={styles.summaryGrid}>
         <article className={styles.summaryCard}>

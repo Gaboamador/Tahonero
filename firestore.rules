@@ -276,6 +276,79 @@ service cloud.firestore {
       return unit in ["g", "kg", "ml", "l", "unidad", "paquete", "lata", "botella"];
     }
 
+    function isValidTripLeftover() {
+      return request.resource.data.keys().hasOnly([
+          "sourceType",
+          "sourceItemKey",
+          "sourceSignature",
+          "name",
+          "plannedQuantity",
+          "plannedUnit",
+          "plannedQuantityLabel",
+          "purchasePlace",
+          "status",
+          "leftoverQuantity",
+          "leftoverUnit",
+          "actualPurchasedQuantity",
+          "actualPurchasedUnit",
+          "note",
+          "updatedBy",
+          "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "sourceType",
+          "sourceItemKey",
+          "sourceSignature",
+          "name",
+          "plannedQuantity",
+          "plannedUnit",
+          "plannedQuantityLabel",
+          "purchasePlace",
+          "status",
+          "leftoverQuantity",
+          "leftoverUnit",
+          "actualPurchasedQuantity",
+          "actualPurchasedUnit",
+          "note",
+          "updatedBy",
+          "updatedAt"
+        ])
+        && request.resource.data.sourceType in ["shopping", "manual"]
+        && request.resource.data.sourceItemKey is string
+        && request.resource.data.sourceSignature is string
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.plannedQuantity is number
+        && request.resource.data.plannedQuantity >= 0
+        && isAllowedFoodUnit(request.resource.data.plannedUnit)
+        && request.resource.data.plannedQuantityLabel is string
+        && request.resource.data.purchasePlace is string
+        && request.resource.data.status in ["none", "leftover"]
+        && request.resource.data.leftoverQuantity is number
+        && request.resource.data.leftoverQuantity >= 0
+        && isAllowedFoodUnit(request.resource.data.leftoverUnit)
+        && request.resource.data.actualPurchasedQuantity is number
+        && request.resource.data.actualPurchasedQuantity >= 0
+        && isAllowedFoodUnit(request.resource.data.actualPurchasedUnit)
+        && request.resource.data.note is string
+        && request.resource.data.updatedBy == request.auth.uid
+        && (
+          (request.resource.data.status == "none"
+            && request.resource.data.leftoverQuantity == 0)
+          || (request.resource.data.status == "leftover"
+            && request.resource.data.leftoverQuantity > 0)
+        )
+        && (
+          (request.resource.data.sourceType == "shopping"
+            && request.resource.data.sourceItemKey.size() > 0
+            && request.resource.data.sourceSignature.size() > 0)
+          || (request.resource.data.sourceType == "manual"
+            && request.resource.data.sourceItemKey == ""
+            && request.resource.data.sourceSignature == ""
+            && request.resource.data.status == "leftover")
+        );
+    }
+
     function foodItemImmutableFieldsAreUnchanged() {
       return request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.createdAt == resource.data.createdAt;
@@ -868,6 +941,13 @@ service cloud.firestore {
           && request.resource.data.signature is string
           && request.resource.data.signature.size() > 0
           && request.resource.data.updatedBy == request.auth.uid;
+        allow delete: if isGroupMember(groupId);
+      }
+
+      match /tripLeftovers/{recordId} {
+        allow read: if isGroupMember(groupId);
+        allow create, update: if isGroupMember(groupId)
+          && isValidTripLeftover();
         allow delete: if isGroupMember(groupId);
       }
     }

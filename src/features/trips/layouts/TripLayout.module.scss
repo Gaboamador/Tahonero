@@ -1,179 +1,52 @@
 @use "@/styles/refs" as *;
+@use "@/features/trips/styles/moduleIdentity" as moduleIdentity;
 
 .page {
   display: grid;
   gap: $space-md;
 }
 
-.backButton {
-  display: inline-flex;
-  align-items: center;
-  justify-self: start;
-  gap: $space-xs;
-
-  padding: $space-xs $space-sm;
-
-  color: $color-text-secondary;
-  font-size: $font-size-body-sm;
-  font-weight: $font-weight-bold;
-
-  border-radius: $radius-pill;
-
-  transition:
-    color 160ms ease,
-    background 160ms ease;
-
-  &:hover {
-    color: $color-text-primary;
-    background: $color-bg-elevated-2;
-  }
-}
-
-.tripHeader,
+.tripBar,
 .statusCard {
-  padding: $space-lg;
-
-  background: $color-bg-elevated;
-  border: 1px solid $color-border;
-  border-radius: $radius-xl;
-  box-shadow: $shadow-sm;
-}
-
-.tripHeader {
-  display: flex;
-  flex-direction: column;
-  gap: $space-md;
-
-  background:
-    linear-gradient(135deg, rgba($color-accent-primary, 0.1), transparent),
-    $color-bg-elevated;
-
-  @media (min-width: 720px) {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-}
-
-.tripInfo {
-  min-width: 0;
-
-  h1 {
-    margin-bottom: $space-xs;
-
-    color: $color-text-primary;
-    font-family: $font-family-display;
-    font-size: $font-size-heading-lg;
-    line-height: 1.1;
-    letter-spacing: -0.04em;
-  }
-
-  > p:not(.eyebrow) {
-    max-width: 620px;
-    color: $color-text-secondary;
-  }
-}
-
-.eyebrow {
-  margin-bottom: $space-xs;
-
-  color: $color-accent-primary;
-  font-size: $font-size-label-sm;
-  font-weight: $font-weight-bold;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.dateRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: $space-xs;
-  margin-top: $space-sm;
-
-  color: $color-text-secondary;
-  font-size: $font-size-body-sm;
-  font-weight: $font-weight-medium;
-
-  svg {
-    flex: 0 0 auto;
-    color: $color-accent-secondary;
-  }
-}
-
-.daysBadge {
-  padding: $space-2xs $space-xs;
-
-  color: $color-accent-secondary;
-  font-size: $font-size-label-xs;
-  font-weight: $font-weight-bold;
-
-  background: rgba($color-accent-secondary, 0.1);
-  border-radius: $radius-pill;
-}
-
-.settingsLink {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: $space-xs;
-
-  min-height: 42px;
-  padding: $space-xs $space-md;
-
-  color: $color-text-primary;
-  font-size: $font-size-body-sm;
-  font-weight: $font-weight-bold;
-  white-space: nowrap;
-
-  background: $color-bg-elevated-2;
-  border: 1px solid $color-border;
-  border-radius: $radius-md;
-
-  transition:
-    border-color 160ms ease,
-    background 160ms ease,
-    transform 160ms ease;
-
-  &:hover {
-    border-color: $color-border-strong;
-    background: $color-bg-elevated;
-    transform: translateY(-1px);
-  }
-}
-
-.tripNav {
-  display: flex;
-  gap: $space-xs;
-  overflow-x: auto;
-  padding: $space-xs;
-
   background: $color-bg-elevated;
   border: 1px solid $color-border;
   border-radius: $radius-lg;
   box-shadow: $shadow-sm;
 }
 
-.navLink {
+.tripBar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: $space-xs;
+  min-height: 54px;
+  padding: $space-xs;
+
+  @media (min-width: 720px) {
+    gap: $space-sm;
+    min-height: 58px;
+    padding: $space-xs $space-sm;
+  }
+}
+
+.backButton,
+.settingsLink,
+.fallbackBackButton {
   display: inline-flex;
-  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   gap: $space-xs;
 
-  min-height: 38px;
-  padding: $space-xs $space-sm;
-
   color: $color-text-secondary;
   font-size: $font-size-body-sm;
   font-weight: $font-weight-bold;
-  white-space: nowrap;
 
   border-radius: $radius-md;
 
   transition:
     color 160ms ease,
-    background 160ms ease;
+    background 160ms ease,
+    border-color 160ms ease;
 
   &:hover {
     color: $color-text-primary;
@@ -181,14 +54,158 @@
   }
 }
 
+.backButton,
+.settingsLink {
+  width: 40px;
+  height: 40px;
+
+  span {
+    display: none;
+  }
+
+  @media (min-width: 720px) {
+    width: auto;
+    padding: 0 $space-sm;
+
+    span {
+      display: inline;
+    }
+  }
+}
+
+.settingsLink {
+  border: 1px solid transparent;
+
+  &:hover {
+    border-color: $color-border;
+  }
+}
+
+.fallbackBackButton {
+  justify-self: start;
+  min-height: 40px;
+  padding: $space-xs $space-sm;
+}
+
+.tripContext {
+  display: grid;
+  gap: 0.05rem;
+  min-width: 0;
+  text-align: center;
+
+  strong,
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  strong {
+    color: $color-text-primary;
+    font-family: $font-family-display;
+    font-size: $font-size-body;
+    line-height: 1.2;
+  }
+
+  span {
+    color: $color-text-muted;
+    font-size: $font-size-body-xs;
+  }
+
+  @media (min-width: 720px) {
+    text-align: left;
+
+    strong {
+      font-size: $font-size-heading-sm;
+    }
+  }
+}
+
+.tripNav {
+  position: sticky;
+  top: $header-height-md;
+  z-index: 8;
+
+  display: flex;
+  gap: $space-2xs;
+  overflow-x: auto;
+  padding: $space-2xs;
+
+  background: rgba($color-bg-elevated, 0.96);
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+
+  scrollbar-width: none;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    top: $header-height-md;
+    gap: $space-xs;
+    padding: $space-xs;
+  }
+}
+
+.navLink {
+  @include moduleIdentity.module-themes;
+
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: $space-xs;
+
+  min-height: 36px;
+  padding: $space-xs $space-sm;
+
+  color: $color-text-secondary;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+
+  border: 1px solid transparent;
+  border-radius: $radius-md;
+
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+
+  svg {
+    flex: 0 0 auto;
+    color: $color-text-muted;
+    transition: color 160ms ease;
+  }
+
+  &:hover {
+    color: $color-text-primary;
+    background: $color-bg-elevated-2;
+
+    svg {
+      color: var(--module-accent);
+    }
+  }
+}
+
 .activeNavLink {
-  color: $color-accent-primary;
-  background: rgba($color-accent-primary, 0.1);
+  color: var(--module-accent);
+  background: var(--module-accent-soft);
+  border-color: var(--module-accent-border);
+
+  svg {
+    color: var(--module-accent);
+  }
 }
 
 .statusCard {
   display: grid;
   gap: $space-xs;
+  padding: $space-lg;
 
   h1 {
     color: $color-text-primary;

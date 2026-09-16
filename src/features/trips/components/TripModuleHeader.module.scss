@@ -1,0 +1,85 @@
+@use "@/styles/refs" as *;
+@use "@/features/trips/styles/moduleIdentity" as moduleIdentity;
+
+.header {
+  @include moduleIdentity.module-themes;
+
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: $space-sm;
+  align-items: center;
+  padding: $space-sm $space-md;
+
+  background:
+    linear-gradient(135deg, var(--module-accent-soft), transparent 62%),
+    $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-left: 3px solid var(--module-accent);
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+
+  @media (min-width: 720px) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: $space-md $space-lg;
+  }
+}
+
+.iconWrap {
+  display: grid;
+  width: 38px;
+  height: 38px;
+
+  color: var(--module-accent);
+
+  background: var(--module-accent-soft-strong);
+  border: 1px solid var(--module-accent-border);
+  border-radius: $radius-lg;
+
+  place-items: center;
+
+  svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+}
+
+.content {
+  min-width: 0;
+
+  h2 {
+    color: $color-text-primary;
+    font-family: $font-family-display;
+    font-size: $font-size-heading-sm;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    margin-top: $space-2xs;
+    max-width: 760px;
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+    line-height: 1.45;
+  }
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.1rem;
+
+  color: var(--module-accent);
+  font-size: $font-size-label-xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.action {
+  grid-column: 2;
+  justify-self: start;
+
+  @media (min-width: 720px) {
+    grid-column: auto;
+    justify-self: end;
+  }
+}

@@ -38,6 +38,7 @@ import {
   getOrderTotal,
   parseEmpanadaCount,
 } from '@/features/empanadas/utils/empanadaUtils';
+import TripModuleHeader from '@/features/trips/components/TripModuleHeader';
 import styles from './EmpanadasPage.module.scss';
 
 function EmpanadasPage() {
@@ -512,14 +513,11 @@ function EmpanadasPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.moduleHeader}>
-        <div>
-          <p className={styles.eyebrow}>Módulo</p>
-          <h2>Empanadas</h2>
-          <p>Armá el pedido, repartilo entre las comidas y controlá qué queda en la caja.</p>
-        </div>
-        <FiPackage aria-hidden="true" />
-      </header>
+      <TripModuleHeader
+        moduleId="empanadas"
+        title="Empanadas"
+        description="Armá el pedido, repartilo entre las comidas y controlá qué queda en la caja."
+      />
 
       {loadError ? <p className={styles.error}>{loadError}</p> : null}
       {vendorsError ? <p className={styles.error}>{vendorsError}</p> : null}

@@ -6,6 +6,7 @@ import EmpanadaVendorLibraryPage from '@/features/empanadas/pages/EmpanadaVendor
 import MealsPage from '@/features/meals/pages/MealsPage';
 import RecipeLibraryPage from '@/features/meals/pages/RecipeLibraryPage';
 import ShoppingPage from '@/features/shopping/pages/ShoppingPage';
+import LeftoversPage from '@/features/leftovers/pages/LeftoversPage';
 import TripMembersPage from '@/features/members/pages/TripMembersPage';
 import TripLayout from '@/features/trips/layouts/TripLayout';
 import TripDashboardPage from '@/features/trips/pages/TripDashboardPage';
@@ -72,6 +73,7 @@ function AppRoutes() {
           <Route path="comidas" element={<MealsPage />} />
           <Route path="compras" element={<ShoppingPage />} />
           <Route path="empanadas" element={<EmpanadasPage />} />
+          <Route path="sobras" element={<LeftoversPage />} />
           <Route path="participantes" element={<TripMembersPage />} />
         </Route>
 
@@ -119,6 +121,10 @@ function AppRoutes() {
         <Route
           path="/grupos/:groupId/empanadas"
           element={<LegacyGroupRedirect buildPath={({ groupId }) => `/viajes/${groupId}/empanadas`} />}
+        />
+        <Route
+          path="/grupos/:groupId/sobras"
+          element={<LegacyGroupRedirect buildPath={({ groupId }) => `/viajes/${groupId}/sobras`} />}
         />
       </Route>
 

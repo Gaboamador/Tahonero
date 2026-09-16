@@ -1,15 +1,6 @@
 import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
-import {
-  FiArrowLeft,
-  FiCalendar,
-  FiCoffee,
-  FiDollarSign,
-  FiHome,
-  FiPackage,
-  FiSettings,
-  FiShoppingCart,
-  FiUsers,
-} from 'react-icons/fi';
+import { FiArrowLeft, FiSettings } from 'react-icons/fi';
+import { TRIP_MODULES } from '@/features/trips/constants/tripModules';
 import { useAuth } from '@/hooks/useAuth';
 import { useGroup } from '@/hooks/useGroup';
 import { isUserGroupMember } from '@/services/firebase/groupService';
@@ -37,7 +28,7 @@ function TripLayout() {
   if (groupError || !groupExists || !currentUserIsMember) {
     return (
       <section className={styles.page}>
-        <button type="button" className={styles.backButton} onClick={() => navigate('/')}>
+        <button type="button" className={styles.fallbackBackButton} onClick={() => navigate('/')}>
           <FiArrowLeft aria-hidden="true" />
           Volver
         </button>
@@ -54,83 +45,57 @@ function TripLayout() {
 
   return (
     <section className={styles.page}>
-      <button type="button" className={styles.backButton} onClick={() => navigate('/')}>
-        <FiArrowLeft aria-hidden="true" />
-        Todos los viajes
-      </button>
+      <header className={styles.tripBar}>
+        <button
+          type="button"
+          className={styles.backButton}
+          onClick={() => navigate('/')}
+          aria-label="Volver a todos los viajes"
+        >
+          <FiArrowLeft aria-hidden="true" />
+          <span>Viajes</span>
+        </button>
 
-      <header className={styles.tripHeader}>
-        <div className={styles.tripInfo}>
-          <p className={styles.eyebrow}>Viaje</p>
-          <h1>{group.name}</h1>
-          <p>{group.description || 'Viaje compartido.'}</p>
-
-          <div className={styles.dateRow}>
-            <FiCalendar aria-hidden="true" />
-            <span>{formatTripDateRange(group.startDate, group.endDate)}</span>
-            {daysCount > 0 ? (
-              <span className={styles.daysBadge}>
-                {daysCount} {daysCount === 1 ? 'día' : 'días'}
-              </span>
-            ) : null}
-          </div>
+        <div className={styles.tripContext}>
+          <strong>{group.name}</strong>
+          <span>
+            {formatTripDateRange(group.startDate, group.endDate)}
+            {daysCount > 0 ? ` · ${daysCount} ${daysCount === 1 ? 'día' : 'días'}` : ''}
+          </span>
         </div>
 
-        <NavLink to={`/viajes/${group.id}/editar`} className={styles.settingsLink}>
+        <NavLink
+          to={`/viajes/${group.id}/editar`}
+          className={styles.settingsLink}
+          aria-label="Configurar viaje"
+        >
           <FiSettings aria-hidden="true" />
-          Configurar viaje
+          <span>Configurar</span>
         </NavLink>
       </header>
 
-      <nav className={styles.tripNav} aria-label="Secciones del viaje">
-        <NavLink
-          end
-          to={`/viajes/${group.id}`}
-          className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-        >
-          <FiHome aria-hidden="true" />
-          Inicio
-        </NavLink>
+      <nav className={styles.tripNav} aria-label="Módulos del viaje">
+        {TRIP_MODULES.map((module) => {
+          const Icon = module.icon;
+          const to = module.path
+            ? `/viajes/${group.id}/${module.path}`
+            : `/viajes/${group.id}`;
 
-        <NavLink
-          to={`/viajes/${group.id}/gastos`}
-          className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-        >
-          <FiDollarSign aria-hidden="true" />
-          Gastos
-        </NavLink>
-
-        <NavLink
-          to={`/viajes/${group.id}/comidas`}
-          className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-        >
-          <FiCoffee aria-hidden="true" />
-          Comidas
-        </NavLink>
-
-        <NavLink
-          to={`/viajes/${group.id}/compras`}
-          className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-        >
-          <FiShoppingCart aria-hidden="true" />
-          Compras
-        </NavLink>
-
-        <NavLink
-          to={`/viajes/${group.id}/empanadas`}
-          className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-        >
-          <FiPackage aria-hidden="true" />
-          Empanadas
-        </NavLink>
-
-        <NavLink
-          to={`/viajes/${group.id}/participantes`}
-          className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeNavLink : ''}`}
-        >
-          <FiUsers aria-hidden="true" />
-          Participantes
-        </NavLink>
+          return (
+            <NavLink
+              key={module.id}
+              end={module.id === 'summary'}
+              to={to}
+              data-module={module.id}
+              className={({ isActive }) =>
+                `${styles.navLink} ${isActive ? styles.activeNavLink : ''}`
+              }
+            >
+              <Icon aria-hidden="true" />
+              {module.label}
+            </NavLink>
+          );
+        })}
       </nav>
 
       <Outlet context={{ group }} />

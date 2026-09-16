@@ -1,4 +1,5 @@
 @use "@/styles/refs" as *;
+@use "@/features/trips/styles/moduleIdentity" as moduleIdentity;
 
 .page {
   display: grid;
@@ -116,6 +117,8 @@
 }
 
 .statusCard {
+  @include moduleIdentity.module-themes;
+
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: $space-sm;
@@ -136,8 +139,8 @@
     transform 160ms ease;
 
   &:hover {
-    border-color: rgba($color-accent-primary, 0.38);
-    background: rgba($color-accent-primary, 0.05);
+    border-color: var(--module-accent-border);
+    background: var(--module-accent-soft);
     transform: translateY(-1px);
   }
 }
@@ -147,9 +150,9 @@
   width: 42px;
   height: 42px;
 
-  color: $color-accent-primary;
+  color: var(--module-accent);
 
-  background: rgba($color-accent-primary, 0.1);
+  background: var(--module-accent-soft);
   border-radius: $radius-lg;
 
   place-items: center;

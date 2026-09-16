@@ -1,0 +1,554 @@
+@use "@/styles/refs" as *;
+
+.page {
+  display: grid;
+  gap: $space-md;
+}
+
+.summaryGrid {
+  display: grid;
+  gap: $space-sm;
+
+  @media (min-width: 680px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.summaryCard {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-sm;
+  padding: $space-md;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+
+  > svg {
+    flex: 0 0 auto;
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-top: 0.15rem;
+    color: $color-accent-leftovers;
+  }
+
+  div {
+    display: grid;
+    gap: $space-2xs;
+  }
+
+  span,
+  small {
+    color: $color-text-muted;
+  }
+
+  span {
+    font-size: $font-size-label-xs;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  strong {
+    color: $color-text-primary;
+    font-size: $font-size-heading-sm;
+  }
+
+  small {
+    font-size: $font-size-body-xs;
+  }
+}
+
+.panel {
+  display: grid;
+  gap: $space-md;
+  padding: $space-md;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-sm;
+
+  @media (min-width: 720px) {
+    padding: $space-lg;
+  }
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-sm;
+
+  h3 {
+    color: $color-text-primary;
+    font-size: $font-size-heading-sm;
+  }
+
+  p {
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+  }
+}
+
+.panelIcon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+
+  color: $color-accent-leftovers;
+
+  background: rgba($color-accent-leftovers, 0.1);
+  border-radius: $radius-lg;
+
+  place-items: center;
+}
+
+.error,
+.loading {
+  padding: $space-sm $space-md;
+  font-size: $font-size-body-sm;
+  border-radius: $radius-md;
+}
+
+.error {
+  color: $color-danger;
+  background: rgba($color-danger, 0.08);
+  border: 1px solid rgba($color-danger, 0.22);
+}
+
+.loading {
+  color: $color-text-secondary;
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+}
+
+.reviewList {
+  display: grid;
+  gap: $space-sm;
+}
+
+.reviewCard {
+  display: grid;
+  gap: $space-sm;
+  padding: $space-md;
+
+  background: $color-bg-elevated-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+}
+
+.reviewedCard {
+  border-color: rgba($color-accent-leftovers, 0.28);
+}
+
+.productTopRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $space-sm;
+}
+
+.productInfo {
+  display: grid;
+  gap: $space-2xs;
+  min-width: 0;
+
+  > strong {
+    color: $color-text-primary;
+    font-size: $font-size-body;
+  }
+
+  span {
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+
+    b {
+      color: $color-text-primary;
+    }
+  }
+
+  small {
+    overflow: hidden;
+    color: $color-text-muted;
+    font-size: $font-size-body-xs;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.reviewStatus {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: $space-2xs;
+  padding: $space-2xs $space-xs;
+
+  color: $color-text-muted;
+  font-size: $font-size-label-xs;
+  font-weight: $font-weight-bold;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-pill;
+}
+
+.reviewStatusDone {
+  color: $color-accent-leftovers;
+  background: rgba($color-accent-leftovers, 0.08);
+  border-color: rgba($color-accent-leftovers, 0.26);
+}
+
+.staleNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-xs;
+  padding: $space-xs $space-sm;
+
+  color: $color-warning;
+  font-size: $font-size-body-xs;
+
+  background: rgba($color-warning, 0.07);
+  border: 1px solid rgba($color-warning, 0.2);
+  border-radius: $radius-md;
+
+  svg {
+    flex: 0 0 auto;
+    margin-top: 0.1rem;
+  }
+}
+
+.choiceRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $space-xs;
+
+  button {
+    min-height: 40px;
+    padding: $space-xs $space-sm;
+
+    color: $color-text-secondary;
+    font-size: $font-size-body-sm;
+    font-weight: $font-weight-bold;
+
+    background: $color-bg-elevated;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+  }
+}
+
+.activeNoLeftover {
+  color: $color-success !important;
+  background: rgba($color-success, 0.08) !important;
+  border-color: rgba($color-success, 0.28) !important;
+}
+
+.activeLeftover {
+  color: $color-accent-leftovers !important;
+  background: rgba($color-accent-leftovers, 0.1) !important;
+  border-color: rgba($color-accent-leftovers, 0.32) !important;
+}
+
+.leftoverForm,
+.manualForm {
+  display: grid;
+  gap: $space-sm;
+  padding-top: $space-sm;
+  border-top: 1px solid $color-border;
+}
+
+.leftoverForm {
+  @media (min-width: 760px) {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.3fr) auto;
+    align-items: end;
+  }
+}
+
+.manualForm {
+  @media (min-width: 760px) {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.8fr) minmax(0, 1.2fr) auto;
+    align-items: end;
+  }
+}
+
+.field {
+  display: grid;
+  gap: $space-xs;
+  min-width: 0;
+
+  > span {
+    color: $color-text-secondary;
+    font-size: $font-size-label-sm;
+    font-weight: $font-weight-medium;
+
+    small {
+      color: $color-text-muted;
+      font-weight: $font-weight-regular;
+    }
+  }
+
+  > input,
+  select,
+  .quantityField input {
+    min-height: 42px;
+    padding: 0.65rem $space-sm;
+
+    color: $color-text-primary;
+
+    background: $color-bg-elevated;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+    outline: none;
+
+    &:focus {
+      border-color: rgba($color-accent-leftovers, 0.7);
+      box-shadow: 0 0 0 3px rgba($color-accent-leftovers, 0.12);
+    }
+  }
+}
+
+.quantityField {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 82px;
+  gap: $space-xs;
+
+  input,
+  select {
+    width: 100%;
+  }
+}
+
+.saveButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-xs;
+  min-height: 42px;
+  padding: $space-xs $space-md;
+
+  color: $color-accent-leftovers-contrast;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+
+  background: $color-accent-leftovers;
+  border-radius: $radius-md;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+.emptyState {
+  display: grid;
+  justify-items: center;
+  gap: $space-xs;
+  padding: $space-xl $space-md;
+
+  color: $color-text-secondary;
+  text-align: center;
+
+  background: $color-bg-elevated-2;
+  border: 1px dashed $color-border-strong;
+  border-radius: $radius-lg;
+
+  > svg {
+    width: 1.8rem;
+    height: 1.8rem;
+    color: $color-accent-leftovers;
+  }
+
+  strong {
+    color: $color-text-primary;
+  }
+
+  p {
+    max-width: 560px;
+    font-size: $font-size-body-sm;
+  }
+}
+
+.manualList {
+  display: grid;
+  gap: $space-xs;
+  padding-top: $space-sm;
+  border-top: 1px solid $color-border;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-sm;
+    padding: $space-sm;
+
+    background: $color-bg-elevated-2;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+  }
+
+  div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: $space-2xs $space-sm;
+    min-width: 0;
+  }
+
+  strong {
+    color: $color-text-primary;
+  }
+
+  span {
+    color: $color-accent-leftovers;
+    font-weight: $font-weight-bold;
+  }
+
+  small {
+    flex-basis: 100%;
+    color: $color-text-muted;
+    font-size: $font-size-body-xs;
+  }
+}
+
+.deleteButton {
+  display: grid;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+
+  color: $color-danger;
+
+  background: rgba($color-danger, 0.07);
+  border: 1px solid rgba($color-danger, 0.18);
+  border-radius: $radius-md;
+
+  place-items: center;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.noLeftoverDetails {
+  display: grid;
+  gap: $space-sm;
+}
+
+.detailsToggle {
+  justify-self: start;
+  min-height: 34px;
+  padding: $space-2xs $space-xs;
+
+  color: $color-text-muted;
+  font-size: $font-size-body-xs;
+  font-weight: $font-weight-bold;
+
+  background: transparent;
+  border-radius: $radius-md;
+
+  &:hover {
+    color: $color-text-secondary;
+    background: $color-bg-elevated;
+  }
+}
+
+.noLeftoverForm {
+  display: grid;
+  gap: $space-sm;
+  padding-top: $space-sm;
+  border-top: 1px solid $color-border;
+
+  @media (min-width: 760px) {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr) auto;
+    align-items: end;
+  }
+}
+
+.secondarySaveButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-xs;
+  min-height: 42px;
+  padding: $space-xs $space-md;
+
+  color: $color-accent-leftovers;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+
+  background: rgba($color-accent-leftovers, 0.08);
+  border: 1px solid rgba($color-accent-leftovers, 0.26);
+  border-radius: $radius-md;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+.consolidatedPanel {
+  border-color: rgba($color-accent-leftovers, 0.26);
+  background:
+    linear-gradient(180deg, rgba($color-accent-leftovers, 0.055), transparent 150px),
+    $color-bg-elevated;
+}
+
+.consolidatedList {
+  display: grid;
+  gap: $space-xs;
+
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-md;
+    min-width: 0;
+    padding: $space-sm $space-md;
+
+    background: $color-bg-elevated-2;
+    border: 1px solid $color-border;
+    border-radius: $radius-lg;
+  }
+
+  div {
+    display: grid;
+    gap: $space-2xs;
+    min-width: 0;
+  }
+
+  strong {
+    overflow: hidden;
+    color: $color-text-primary;
+    font-size: $font-size-body;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    color: $color-text-muted;
+    font-size: $font-size-body-xs;
+  }
+
+  span {
+    flex: 0 0 auto;
+    color: $color-accent-leftovers;
+    font-size: $font-size-body;
+    font-weight: $font-weight-bold;
+    white-space: nowrap;
+  }
+}
+
+.consolidatedEmptyState {
+  padding-block: $space-lg;
+}
