@@ -123,3 +123,9 @@
     padding-inline: $container-padding-md;
   }
 }
+
+@media (max-width: 719px) {
+  .main {
+    padding: $space-md $container-padding-xs $space-xl;
+  }
+}

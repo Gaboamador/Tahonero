@@ -136,3 +136,9 @@
     background: rgba($color-accent-secondary, 0.12);
   }
 }
+
+@media (max-width: 719px) {
+  .card {
+    padding: $space-sm;
+  }
+}

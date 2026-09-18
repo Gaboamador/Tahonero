@@ -153,3 +153,14 @@
     opacity: 0.68;
   }
 }
+
+@media (max-width: 719px) {
+  .card,
+  .statusCard {
+    padding: $space-md;
+  }
+
+  .header h1 {
+    font-size: $font-size-heading-md;
+  }
+}

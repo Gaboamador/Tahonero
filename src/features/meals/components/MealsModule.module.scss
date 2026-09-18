@@ -653,3 +653,54 @@
     opacity: 0.55;
   }
 }
+
+@media (max-width: 719px) {
+  .section {
+    gap: $space-sm;
+    padding: $space-md;
+  }
+
+  .formCard,
+  .itemCard,
+  .dayCard {
+    padding: $space-sm;
+  }
+
+  .formCard,
+  .dayList {
+    gap: $space-sm;
+  }
+
+  .ingredientRow {
+    gap: $space-xs;
+    padding: $space-xs;
+  }
+
+  .compactEmptyState {
+    padding: $space-sm;
+  }
+
+  .emptyState {
+    padding: $space-lg $space-sm;
+  }
+
+  .dayCard,
+  .slotsGrid,
+  .slotCard {
+    gap: $space-xs;
+  }
+
+  .slotCard {
+    padding: $space-xs;
+  }
+
+  .checkboxItem {
+    padding-inline: $space-xs;
+  }
+
+  .totalPreview,
+  .inlineCheckbox,
+  .libraryRow {
+    padding: $space-sm;
+  }
+}

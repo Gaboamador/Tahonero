@@ -343,3 +343,20 @@
     height: 0.95rem;
   }
 }
+
+@media (max-width: 719px) {
+  .summaryCard,
+  .statusCard,
+  .alertsLoading,
+  .dataWarning,
+  .allGood,
+  .alertCard {
+    padding: $space-sm;
+  }
+
+  .statusSection,
+  .alertsSection {
+    gap: $space-sm;
+    padding: $space-md;
+  }
+}

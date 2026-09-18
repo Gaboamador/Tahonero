@@ -93,3 +93,9 @@
     opacity: 0.68;
   }
 }
+
+@media (max-width: 719px) {
+  .form {
+    padding: $space-sm;
+  }
+}

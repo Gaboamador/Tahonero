@@ -217,3 +217,15 @@
   color: $color-text-muted;
   background: rgba($color-text-muted, 0.1);
 }
+
+@media (max-width: 719px) {
+  .totalCard,
+  .settledBox {
+    padding: $space-sm;
+  }
+
+  .settlementItem,
+  .balanceItem {
+    padding-inline: $space-sm;
+  }
+}

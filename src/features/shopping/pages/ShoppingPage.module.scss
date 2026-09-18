@@ -358,3 +358,25 @@
     opacity: 0.7;
   }
 }
+
+@media (max-width: 719px) {
+  .hero {
+    padding: $space-md;
+  }
+
+  .summaryCard {
+    padding: $space-sm;
+  }
+
+  .emptyState {
+    padding: $space-xl $space-md;
+  }
+
+  .placeHeader {
+    padding: $space-sm $space-md;
+  }
+
+  .checkControl {
+    padding-inline: $space-md;
+  }
+}

@@ -552,3 +552,18 @@
 .consolidatedEmptyState {
   padding-block: $space-lg;
 }
+
+@media (max-width: 719px) {
+  .summaryCard,
+  .reviewCard {
+    padding: $space-sm;
+  }
+
+  .emptyState {
+    padding: $space-lg $space-sm;
+  }
+
+  .consolidatedList li {
+    padding-inline: $space-sm;
+  }
+}

@@ -556,3 +556,19 @@
     }
   }
 }
+
+@media (max-width: 719px) {
+  .hero,
+  .panel,
+  .statusCard {
+    padding: $space-md;
+  }
+
+  .hero h1 {
+    font-size: $font-size-heading-md;
+  }
+
+  .placeholderBox {
+    padding: $space-lg $space-md;
+  }
+}

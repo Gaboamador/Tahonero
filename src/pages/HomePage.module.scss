@@ -162,3 +162,17 @@
     transform: translateY(-1px);
   }
 }
+
+@media (max-width: 719px) {
+  .page {
+    gap: $space-md;
+  }
+
+  .hero {
+    padding: $space-md;
+  }
+
+  .emptyState {
+    padding: $space-xl $space-md;
+  }
+}

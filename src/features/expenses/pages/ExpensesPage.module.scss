@@ -175,3 +175,14 @@
   border: 1px solid rgba($color-danger, 0.22);
   border-radius: $radius-md;
 }
+
+@media (max-width: 719px) {
+  .sectionHeader,
+  .panel {
+    padding: $space-md;
+  }
+
+  .placeholderBox {
+    padding: $space-lg $space-md;
+  }
+}

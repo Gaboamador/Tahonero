@@ -216,3 +216,9 @@
     color: $color-text-secondary;
   }
 }
+
+@media (max-width: 719px) {
+  .statusCard {
+    padding: $space-md;
+  }
+}

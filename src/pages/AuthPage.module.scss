@@ -196,3 +196,29 @@
     font-weight: $font-weight-bold;
   }
 }
+
+@media (max-width: 719px) {
+  .authPage {
+    padding: $space-md $container-padding-xs;
+  }
+
+  .card {
+    padding: $space-md;
+  }
+
+  .header {
+    margin-bottom: $space-md;
+
+    h1 {
+      font-size: $font-size-heading-md;
+    }
+  }
+
+  .separator {
+    margin: $space-md 0;
+  }
+
+  .footerText {
+    margin-top: $space-md;
+  }
+}

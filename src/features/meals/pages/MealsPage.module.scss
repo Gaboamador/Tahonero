@@ -114,3 +114,13 @@
   background: $color-bg-elevated;
   border: 1px solid $color-border;
 }
+
+@media (max-width: 719px) {
+  .hero {
+    padding: $space-md;
+  }
+
+  .summaryCard {
+    padding: $space-sm;
+  }
+}

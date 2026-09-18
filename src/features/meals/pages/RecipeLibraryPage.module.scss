@@ -73,3 +73,17 @@
   color: $color-text-secondary;
   text-align: center;
 }
+
+@media (max-width: 719px) {
+  .page {
+    gap: $space-md;
+  }
+
+  .hero {
+    padding: $space-md;
+
+    h1 {
+      font-size: $font-size-heading-md;
+    }
+  }
+}
