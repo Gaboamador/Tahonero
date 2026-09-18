@@ -14,16 +14,14 @@ function AppLayout() {
   return (
     <div className={styles.layout}>
       <header className={styles.header}>
-        <NavLink to="/" className={styles.brand}>
+        <div className={styles.brand}>
           <img
-            src="/icons/icon_variante.svg"
+            src="/icons/isologo.svg"
             alt=""
             className={styles.brandIcon}
             aria-hidden="true"
           />
-
-          <span>TAHONERO</span>
-        </NavLink>
+        </div>
 
         <div className={styles.userArea}>
           <span className={styles.userName}>
