@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FiEdit2, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
+import { FiBookOpen, FiEdit2, FiPlus, FiTrash2 } from 'react-icons/fi';
 import PurchasePlaceInput from '@/features/meals/components/PurchasePlaceInput';
 import {
   DRINK_CALCULATION_MODES,
@@ -11,6 +12,12 @@ import {
   deleteDrinkPlan,
   updateDrinkPlan,
 } from '@/features/meals/services/mealService';
+import {
+  importRecurringFoodItemToTrip,
+  RECURRING_ITEM_KINDS,
+  saveTripRecurringItemToLibrary,
+  updateRecurringItemFromTrip,
+} from '@/features/meals/services/recurringFoodLibraryService';
 import { calculateDrinkTotal, formatFoodQuantity } from '@/features/meals/utils/mealUtils';
 import styles from './MealsModule.module.scss';
 
@@ -33,11 +40,17 @@ function DrinkPlansSection({
   members,
   tripDaysCount,
   currentUserUid,
+  sharedUserIds = [],
+  recurringDrinks = [],
+  recurringLoading = false,
   purchasePlaceSuggestions = [],
 }) {
   const [formData, setFormData] = useState(() => createEmptyForm(members));
   const [editingDrinkId, setEditingDrinkId] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [importingItemId, setImportingItemId] = useState('');
+  const [savingDrinkId, setSavingDrinkId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -64,6 +77,10 @@ function DrinkPlansSection({
   );
 
   const previewTotal = calculateDrinkTotal({ drinkPlan: previewPlan, tripDaysCount });
+  const participantIds = useMemo(
+    () => members.map((member) => member.memberId).filter(Boolean),
+    [members],
+  );
 
   const handleParticipantToggle = (memberId) => {
     setFormData((current) => ({
@@ -90,6 +107,7 @@ function DrinkPlansSection({
       coverageDays: drink.coverageDays ? String(drink.coverageDays) : '',
     });
     setError('');
+    setIsLibraryOpen(false);
     setIsFormOpen(true);
   };
 
@@ -98,9 +116,9 @@ function DrinkPlansSection({
     setError('');
 
     if (
-      formData.calculationMode === DRINK_CALCULATION_MODES.perPersonPerDay &&
-      formData.coverageMode === DRINK_COVERAGE_MODES.trip &&
-      tripDaysCount <= 0
+      formData.calculationMode === DRINK_CALCULATION_MODES.perPersonPerDay
+      && formData.coverageMode === DRINK_COVERAGE_MODES.trip
+      && tripDaysCount <= 0
     ) {
       setError('El viaje no tiene fechas. Elegí una cantidad personalizada de días.');
       return;
@@ -123,6 +141,83 @@ function DrinkPlansSection({
       setError(err.message || 'No se pudo guardar la bebida.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleImport = async (item) => {
+    if (drinkPlans.some((drink) => drink.sourceRecurringItemId === item.id)) {
+      setError(`"${item.name}" ya está agregada a este viaje.`);
+      return;
+    }
+
+    if (
+      item.calculationMode === DRINK_CALCULATION_MODES.perPersonPerDay
+      && item.coverageMode === DRINK_COVERAGE_MODES.trip
+      && tripDaysCount <= 0
+    ) {
+      setError(`El viaje no tiene fechas. No se puede calcular "${item.name}" para todos los días del viaje.`);
+      return;
+    }
+
+    setError('');
+    setImportingItemId(item.id);
+
+    try {
+      await importRecurringFoodItemToTrip({
+        groupId,
+        item,
+        createdBy: currentUserUid,
+        accessUserIds: sharedUserIds,
+        participantIds,
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'No se pudo importar la bebida recurrente.');
+    } finally {
+      setImportingItemId('');
+    }
+  };
+
+  const handleSaveToLibrary = async (drink) => {
+    setError('');
+    setSavingDrinkId(drink.id);
+
+    try {
+      await saveTripRecurringItemToLibrary({
+        groupId,
+        kind: RECURRING_ITEM_KINDS.drink,
+        tripItem: drink,
+        currentUserUid,
+        accessUserIds: sharedUserIds,
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'No se pudo guardar la bebida como recurrente.');
+    } finally {
+      setSavingDrinkId('');
+    }
+  };
+
+  const handleUpdateLibraryItem = async (drink) => {
+    if (!window.confirm(`¿Actualizar la plantilla recurrente "${drink.name}" con la versión de este viaje? Los viajes anteriores no cambian.`)) {
+      return;
+    }
+
+    setError('');
+    setSavingDrinkId(drink.id);
+
+    try {
+      await updateRecurringItemFromTrip({
+        kind: RECURRING_ITEM_KINDS.drink,
+        tripItem: drink,
+        currentUserUid,
+        accessUserIds: sharedUserIds,
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'No se pudo actualizar la plantilla recurrente.');
+    } finally {
+      setSavingDrinkId('');
     }
   };
 
@@ -151,26 +246,98 @@ function DrinkPlansSection({
           </p>
         </div>
 
-        <button
-          type="button"
-          className={styles.primaryButton}
-          onClick={() => {
-            if (isFormOpen && !editingDrinkId) {
-              resetForm();
-            } else {
-              setFormData(createEmptyForm(members));
+        <div className={styles.headerActions}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={() => {
+              setIsLibraryOpen((current) => !current);
+              setIsFormOpen(false);
               setEditingDrinkId('');
               setError('');
-              setIsFormOpen(true);
-            }
-          }}
-        >
-          <FiPlus aria-hidden="true" />
-          Nueva bebida
-        </button>
+            }}
+          >
+            <FiBookOpen aria-hidden="true" />
+            Desde recurrentes
+          </button>
+
+          <button
+            type="button"
+            className={styles.primaryButton}
+            onClick={() => {
+              if (isFormOpen && !editingDrinkId) {
+                resetForm();
+              } else {
+                setFormData(createEmptyForm(members));
+                setEditingDrinkId('');
+                setError('');
+                setIsLibraryOpen(false);
+                setIsFormOpen(true);
+              }
+            }}
+          >
+            <FiPlus aria-hidden="true" />
+            Nueva bebida
+          </button>
+        </div>
       </div>
 
       {error ? <p className={styles.error}>{error}</p> : null}
+
+      {isLibraryOpen ? (
+        <div className={styles.formCard}>
+          <div className={styles.subsectionHeader}>
+            <div>
+              <strong>Bebidas recurrentes</strong>
+              <span>Las bebidas por persona se importan con todos los participantes actuales seleccionados.</span>
+            </div>
+            <Link to="/biblioteca-recurrentes" className={styles.textLink}>Administrar biblioteca</Link>
+          </div>
+
+          {recurringLoading ? <div className={styles.compactEmptyState}>Cargando recurrentes...</div> : null}
+
+          {!recurringLoading && recurringDrinks.length === 0 ? (
+            <div className={styles.compactEmptyState}>
+              Todavía no tenés bebidas recurrentes. Podés crear una en la biblioteca.
+            </div>
+          ) : null}
+
+          {!recurringLoading && recurringDrinks.length > 0 ? (
+            <div className={styles.libraryList}>
+              {recurringDrinks.map((item) => {
+                const alreadyImported = drinkPlans.some(
+                  (drink) => drink.sourceRecurringItemId === item.id,
+                );
+
+                return (
+                  <div key={item.id} className={styles.libraryRow}>
+                    <div>
+                      <strong>{item.name}</strong>
+                      <span>
+                        {item.calculationMode === DRINK_CALCULATION_MODES.fixed
+                          ? `${formatFoodQuantity(item.quantity)} ${item.unit} fijos`
+                          : `${formatFoodQuantity(item.quantity)} ${item.unit} / persona / día`}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={() => handleImport(item)}
+                      disabled={alreadyImported || importingItemId === item.id}
+                    >
+                      {alreadyImported
+                        ? 'Ya agregada'
+                        : importingItemId === item.id
+                          ? 'Importando...'
+                          : 'Importar'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {isFormOpen ? (
         <form className={styles.formCard} onSubmit={handleSubmit}>
@@ -347,6 +514,7 @@ function DrinkPlansSection({
                           : `${formatFoodQuantity(drink.quantity)} ${drink.unit} / persona / día`}
                       </span>
                       {drink.purchasePlace ? <span className={styles.metaBadge}>{drink.purchasePlace}</span> : null}
+                      {drink.sourceRecurringItemId ? <span className={styles.accentBadge}>Recurrente</span> : null}
                     </div>
                     {drink.calculationMode === DRINK_CALCULATION_MODES.perPersonPerDay ? (
                       <p>
@@ -357,6 +525,21 @@ function DrinkPlansSection({
                   </div>
 
                   <div className={styles.itemActions}>
+                    <button
+                      type="button"
+                      className={styles.compactTextButton}
+                      onClick={() => drink.sourceRecurringItemId
+                        ? handleUpdateLibraryItem(drink)
+                        : handleSaveToLibrary(drink)}
+                      disabled={savingDrinkId === drink.id}
+                    >
+                      <FiBookOpen aria-hidden="true" />
+                      {savingDrinkId === drink.id
+                        ? 'Guardando...'
+                        : drink.sourceRecurringItemId
+                          ? 'Actualizar recurrente'
+                          : 'Guardar como recurrente'}
+                    </button>
                     <button type="button" className={styles.iconButton} onClick={() => handleEdit(drink)} aria-label={`Editar ${drink.name}`}>
                       <FiEdit2 aria-hidden="true" />
                     </button>

@@ -446,6 +446,7 @@ service cloud.firestore {
           "unit",
           "purchasePlace",
           "ingredients",
+          "sourceRecurringItemId",
           "createdBy",
           "createdAt",
           "updatedAt"
@@ -468,6 +469,13 @@ service cloud.firestore {
         && (
           !request.resource.data.keys().hasAny(["purchasePlace"])
           || request.resource.data.purchasePlace is string
+        )
+        && (
+          !request.resource.data.keys().hasAny(["sourceRecurringItemId"])
+          || (
+            request.resource.data.sourceRecurringItemId is string
+            && request.resource.data.sourceRecurringItemId.size() > 0
+          )
         )
         && request.resource.data.ingredients is list
         && request.resource.data.createdBy is string
@@ -492,6 +500,7 @@ service cloud.firestore {
           "participantIds",
           "coverageMode",
           "coverageDays",
+          "sourceRecurringItemId",
           "createdBy",
           "createdAt",
           "updatedAt"
@@ -517,6 +526,13 @@ service cloud.firestore {
         && (
           !request.resource.data.keys().hasAny(["purchasePlace"])
           || request.resource.data.purchasePlace is string
+        )
+        && (
+          !request.resource.data.keys().hasAny(["sourceRecurringItemId"])
+          || (
+            request.resource.data.sourceRecurringItemId is string
+            && request.resource.data.sourceRecurringItemId.size() > 0
+          )
         )
         && request.resource.data.participantIds is list
         && request.resource.data.coverageMode in ["trip", "custom"]
@@ -678,6 +694,143 @@ service cloud.firestore {
         );
     }
 
+    function isValidSharedRecurringExtra() {
+      return request.resource.data.keys().hasOnly([
+          "kind",
+          "name",
+          "mode",
+          "quantity",
+          "unit",
+          "purchasePlace",
+          "ingredients",
+          "createdBy",
+          "accessUserIds",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "kind",
+          "name",
+          "mode",
+          "quantity",
+          "unit",
+          "purchasePlace",
+          "ingredients",
+          "createdBy",
+          "accessUserIds",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.kind == "extra"
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.mode in ["direct", "recipe"]
+        && request.resource.data.quantity is number
+        && request.resource.data.unit is string
+        && request.resource.data.purchasePlace is string
+        && request.resource.data.ingredients is list
+        && request.resource.data.createdBy is string
+        && request.resource.data.accessUserIds is list
+        && request.resource.data.accessUserIds.size() > 0
+        && (
+          (request.resource.data.mode == "direct"
+            && request.resource.data.quantity > 0
+            && isAllowedFoodUnit(request.resource.data.unit)
+            && request.resource.data.ingredients.size() == 0)
+          || (request.resource.data.mode == "recipe"
+            && request.resource.data.quantity == 0
+            && request.resource.data.unit == "")
+        );
+    }
+
+    function isValidSharedRecurringDrink() {
+      return request.resource.data.keys().hasOnly([
+          "kind",
+          "name",
+          "calculationMode",
+          "quantity",
+          "unit",
+          "purchasePlace",
+          "coverageMode",
+          "coverageDays",
+          "createdBy",
+          "accessUserIds",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "kind",
+          "name",
+          "calculationMode",
+          "quantity",
+          "unit",
+          "purchasePlace",
+          "coverageMode",
+          "coverageDays",
+          "createdBy",
+          "accessUserIds",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.kind == "drink"
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.calculationMode in ["fixed", "perPersonPerDay"]
+        && request.resource.data.quantity is number
+        && request.resource.data.quantity > 0
+        && isAllowedFoodUnit(request.resource.data.unit)
+        && request.resource.data.purchasePlace is string
+        && request.resource.data.coverageMode in ["trip", "custom"]
+        && request.resource.data.coverageDays is int
+        && request.resource.data.coverageDays >= 0
+        && request.resource.data.createdBy is string
+        && request.resource.data.accessUserIds is list
+        && request.resource.data.accessUserIds.size() > 0
+        && (
+          (request.resource.data.calculationMode == "fixed"
+            && request.resource.data.coverageMode == "trip"
+            && request.resource.data.coverageDays == 0)
+          || (request.resource.data.calculationMode == "perPersonPerDay"
+            && (
+              (request.resource.data.coverageMode == "trip"
+                && request.resource.data.coverageDays == 0)
+              || (request.resource.data.coverageMode == "custom"
+                && request.resource.data.coverageDays > 0)
+            ))
+        );
+    }
+
+    function isValidSharedRecurringFoodItem() {
+      return isValidSharedRecurringExtra() || isValidSharedRecurringDrink();
+    }
+
+    function isValidSharedRecurringFoodPreset() {
+      return request.resource.data.keys().hasOnly([
+          "name",
+          "itemIds",
+          "createdBy",
+          "accessUserIds",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "name",
+          "itemIds",
+          "createdBy",
+          "accessUserIds",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.itemIds is list
+        && request.resource.data.itemIds.size() > 0
+        && request.resource.data.itemIds.size() <= 100
+        && request.resource.data.createdBy is string
+        && request.resource.data.accessUserIds is list
+        && request.resource.data.accessUserIds.size() > 0;
+    }
+
     function isValidEmpanadaConfig() {
       return request.resource.data.keys().hasOnly([
           "vendorName",
@@ -769,6 +922,50 @@ service cloud.firestore {
         && sharedAccessIsValid()
         && sharedAccessOnlyExpands()
         && isValidSharedRecipe();
+
+      allow delete: if isSignedIn()
+        && resource.data.createdBy == request.auth.uid
+        && resource.data.accessUserIds.size() == 1
+        && request.auth.uid in resource.data.accessUserIds;
+    }
+
+    match /recurringFoodItems/{itemId} {
+      allow read: if isSignedIn()
+        && request.auth.uid in resource.data.accessUserIds;
+
+      allow create: if isSignedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && sharedAccessIsValid()
+        && isValidSharedRecurringFoodItem();
+
+      allow update: if isSignedIn()
+        && request.auth.uid in resource.data.accessUserIds
+        && sharedLibraryImmutableFieldsAreUnchanged()
+        && sharedAccessIsValid()
+        && sharedAccessOnlyExpands()
+        && isValidSharedRecurringFoodItem();
+
+      allow delete: if isSignedIn()
+        && resource.data.createdBy == request.auth.uid
+        && resource.data.accessUserIds.size() == 1
+        && request.auth.uid in resource.data.accessUserIds;
+    }
+
+    match /recurringFoodPresets/{presetId} {
+      allow read: if isSignedIn()
+        && request.auth.uid in resource.data.accessUserIds;
+
+      allow create: if isSignedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && sharedAccessIsValid()
+        && isValidSharedRecurringFoodPreset();
+
+      allow update: if isSignedIn()
+        && request.auth.uid in resource.data.accessUserIds
+        && sharedLibraryImmutableFieldsAreUnchanged()
+        && sharedAccessIsValid()
+        && sharedAccessOnlyExpands()
+        && isValidSharedRecurringFoodPreset();
 
       allow delete: if isSignedIn()
         && resource.data.createdBy == request.auth.uid

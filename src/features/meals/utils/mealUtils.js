@@ -70,7 +70,13 @@ export function calculateDrinkTotal({ drinkPlan, tripDaysCount = 0 }) {
   return quantity * participantsCount * days;
 }
 
-export function collectPurchasePlaces({ meals = [], foodExtras = [], drinkPlans = [], libraryRecipes = [] } = {}) {
+export function collectPurchasePlaces({
+  meals = [],
+  foodExtras = [],
+  drinkPlans = [],
+  libraryRecipes = [],
+  recurringItems = [],
+} = {}) {
   const places = new Map();
 
   const addPlace = (value) => {
@@ -92,6 +98,11 @@ export function collectPurchasePlaces({ meals = [], foodExtras = [], drinkPlans 
   });
 
   drinkPlans.forEach((drink) => addPlace(drink.purchasePlace));
+
+  recurringItems.forEach((item) => {
+    addPlace(item.purchasePlace);
+    (item.ingredients || []).forEach((ingredient) => addPlace(ingredient.purchasePlace));
+  });
 
   return Array.from(places.values()).sort((a, b) => a.localeCompare(b, 'es'));
 }

@@ -5,8 +5,11 @@ import DrinkPlansSection from '@/features/meals/components/DrinkPlansSection';
 import FoodExtrasSection from '@/features/meals/components/FoodExtrasSection';
 import MealCatalogSection from '@/features/meals/components/MealCatalogSection';
 import MealPlanSection from '@/features/meals/components/MealPlanSection';
+import RecurringPresetsSection from '@/features/meals/components/RecurringPresetsSection';
 import { useMealModuleData } from '@/features/meals/hooks/useMealModuleData';
+import { useRecurringFoodLibrary } from '@/features/meals/hooks/useRecurringFoodLibrary';
 import { reconcileTripMealLibraryAccess } from '@/features/meals/services/mealService';
+import { reconcileTripRecurringLibraryAccess } from '@/features/meals/services/recurringFoodLibraryService';
 import { useRecipeLibrary } from '@/features/meals/hooks/useRecipeLibrary';
 import { collectPurchasePlaces } from '@/features/meals/utils/mealUtils';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,6 +28,14 @@ function MealsPage() {
     isLoading: libraryLoading,
     error: libraryError,
   } = useRecipeLibrary(currentUser?.uid);
+  const {
+    items: recurringItems,
+    extras: recurringExtras,
+    drinks: recurringDrinks,
+    presets: recurringPresets,
+    isLoading: recurringLoading,
+    error: recurringError,
+  } = useRecurringFoodLibrary(currentUser?.uid);
 
   const members = useMemo(() => getGroupMembers(group), [group]);
   const sharedUserIds = useMemo(() => getTripRegisteredUserIds(group), [group]);
@@ -41,8 +52,14 @@ function MealsPage() {
   );
 
   const purchasePlaceSuggestions = useMemo(
-    () => collectPurchasePlaces({ meals, foodExtras, drinkPlans, libraryRecipes }),
-    [meals, foodExtras, drinkPlans, libraryRecipes],
+    () => collectPurchasePlaces({
+      meals,
+      foodExtras,
+      drinkPlans,
+      libraryRecipes,
+      recurringItems,
+    }),
+    [meals, foodExtras, drinkPlans, libraryRecipes, recurringItems],
   );
 
   const plannedSlots = slots.filter((slot) => mealPlan.some((plan) => plan.id === slot.id)).length;
@@ -66,6 +83,29 @@ function MealsPage() {
     meals,
     libraryRecipes,
     libraryLoading,
+    currentUser?.uid,
+    sharedUserIds,
+  ]);
+
+  useEffect(() => {
+    if (recurringLoading || !currentUser?.uid || (foodExtras.length === 0 && drinkPlans.length === 0)) {
+      return;
+    }
+
+    reconcileTripRecurringLibraryAccess({
+      foodExtras,
+      drinkPlans,
+      libraryItems: recurringItems,
+      currentUserUid: currentUser.uid,
+      accessUserIds: sharedUserIds,
+    }).catch((err) => {
+      console.error('No se pudo sincronizar el acceso a los recurrentes compartidos:', err);
+    });
+  }, [
+    foodExtras,
+    drinkPlans,
+    recurringItems,
+    recurringLoading,
     currentUser?.uid,
     sharedUserIds,
   ]);
@@ -118,6 +158,7 @@ function MealsPage() {
 
       {error ? <p className={styles.error}>{error}</p> : null}
       {libraryError ? <p className={styles.error}>{libraryError}</p> : null}
+      {recurringError ? <p className={styles.error}>{recurringError}</p> : null}
       {isLoading ? <div className={styles.loading}>Cargando datos de comidas...</div> : null}
 
       <MealPlanSection
@@ -140,10 +181,26 @@ function MealsPage() {
         purchasePlaceSuggestions={purchasePlaceSuggestions}
       />
 
+      <RecurringPresetsSection
+        groupId={group.id}
+        presets={recurringPresets}
+        recurringItems={recurringItems}
+        foodExtras={foodExtras}
+        drinkPlans={drinkPlans}
+        members={members}
+        tripDaysCount={tripDaysCount}
+        currentUserUid={currentUser.uid}
+        sharedUserIds={sharedUserIds}
+        libraryLoading={recurringLoading}
+      />
+
       <FoodExtrasSection
         groupId={group.id}
         foodExtras={foodExtras}
         currentUserUid={currentUser.uid}
+        sharedUserIds={sharedUserIds}
+        recurringExtras={recurringExtras}
+        recurringLoading={recurringLoading}
         purchasePlaceSuggestions={purchasePlaceSuggestions}
       />
 
@@ -153,6 +210,9 @@ function MealsPage() {
         members={members}
         tripDaysCount={tripDaysCount}
         currentUserUid={currentUser.uid}
+        sharedUserIds={sharedUserIds}
+        recurringDrinks={recurringDrinks}
+        recurringLoading={recurringLoading}
         purchasePlaceSuggestions={purchasePlaceSuggestions}
       />
     </div>

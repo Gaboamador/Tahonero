@@ -4,6 +4,7 @@ import ExpensesPage from '@/features/expenses/pages/ExpensesPage';
 import EmpanadasPage from '@/features/empanadas/pages/EmpanadasPage';
 import EmpanadaVendorLibraryPage from '@/features/empanadas/pages/EmpanadaVendorLibraryPage';
 import MealsPage from '@/features/meals/pages/MealsPage';
+import RecurringFoodLibraryPage from '@/features/meals/pages/RecurringFoodLibraryPage';
 import RecipeLibraryPage from '@/features/meals/pages/RecipeLibraryPage';
 import ShoppingPage from '@/features/shopping/pages/ShoppingPage';
 import LeftoversPage from '@/features/leftovers/pages/LeftoversPage';
@@ -65,6 +66,7 @@ function AppRoutes() {
 
         <Route path="/viajes/nuevo" element={<CreateGroupPage />} />
         <Route path="/biblioteca-comidas" element={<RecipeLibraryPage />} />
+        <Route path="/biblioteca-recurrentes" element={<RecurringFoodLibraryPage />} />
         <Route path="/biblioteca-empanadas" element={<EmpanadaVendorLibraryPage />} />
 
         <Route path="/viajes/:groupId" element={<TripLayout />}>

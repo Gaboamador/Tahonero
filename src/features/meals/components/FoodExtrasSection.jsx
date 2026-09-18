@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { FiEdit2, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
+import { FiBookOpen, FiEdit2, FiPlus, FiTrash2 } from 'react-icons/fi';
 import IngredientEditor from '@/features/meals/components/IngredientEditor';
 import PurchasePlaceInput from '@/features/meals/components/PurchasePlaceInput';
 import { EXTRA_MODES, FOOD_UNITS } from '@/features/meals/constants/mealConstants';
@@ -8,6 +9,12 @@ import {
   deleteFoodExtra,
   updateFoodExtra,
 } from '@/features/meals/services/mealService';
+import {
+  importRecurringFoodItemToTrip,
+  RECURRING_ITEM_KINDS,
+  saveTripRecurringItemToLibrary,
+  updateRecurringItemFromTrip,
+} from '@/features/meals/services/recurringFoodLibraryService';
 import { createEmptyIngredient, createLocalId, formatFoodQuantity } from '@/features/meals/utils/mealUtils';
 import styles from './MealsModule.module.scss';
 
@@ -26,11 +33,17 @@ function FoodExtrasSection({
   groupId,
   foodExtras,
   currentUserUid,
+  sharedUserIds = [],
+  recurringExtras = [],
+  recurringLoading = false,
   purchasePlaceSuggestions = [],
 }) {
   const [formData, setFormData] = useState(createEmptyForm);
   const [editingExtraId, setEditingExtraId] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [importingItemId, setImportingItemId] = useState('');
+  const [savingExtraId, setSavingExtraId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -62,6 +75,7 @@ function FoodExtrasSection({
           : [],
     });
     setError('');
+    setIsLibraryOpen(false);
     setIsFormOpen(true);
   };
 
@@ -91,6 +105,73 @@ function FoodExtrasSection({
     }
   };
 
+  const handleImport = async (item) => {
+    if (foodExtras.some((extra) => extra.sourceRecurringItemId === item.id)) {
+      setError(`"${item.name}" ya está agregado a este viaje.`);
+      return;
+    }
+
+    setError('');
+    setImportingItemId(item.id);
+
+    try {
+      await importRecurringFoodItemToTrip({
+        groupId,
+        item,
+        createdBy: currentUserUid,
+        accessUserIds: sharedUserIds,
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'No se pudo importar el extra recurrente.');
+    } finally {
+      setImportingItemId('');
+    }
+  };
+
+  const handleSaveToLibrary = async (extra) => {
+    setError('');
+    setSavingExtraId(extra.id);
+
+    try {
+      await saveTripRecurringItemToLibrary({
+        groupId,
+        kind: RECURRING_ITEM_KINDS.extra,
+        tripItem: extra,
+        currentUserUid,
+        accessUserIds: sharedUserIds,
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'No se pudo guardar el extra como recurrente.');
+    } finally {
+      setSavingExtraId('');
+    }
+  };
+
+  const handleUpdateLibraryItem = async (extra) => {
+    if (!window.confirm(`¿Actualizar la plantilla recurrente "${extra.name}" con la versión de este viaje? Los viajes anteriores no cambian.`)) {
+      return;
+    }
+
+    setError('');
+    setSavingExtraId(extra.id);
+
+    try {
+      await updateRecurringItemFromTrip({
+        kind: RECURRING_ITEM_KINDS.extra,
+        tripItem: extra,
+        currentUserUid,
+        accessUserIds: sharedUserIds,
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'No se pudo actualizar la plantilla recurrente.');
+    } finally {
+      setSavingExtraId('');
+    }
+  };
+
   const handleDelete = async (extra) => {
     if (!window.confirm(`¿Borrar "${extra.name}" de los extras?`)) {
       return;
@@ -116,26 +197,98 @@ function FoodExtrasSection({
           </p>
         </div>
 
-        <button
-          type="button"
-          className={styles.primaryButton}
-          onClick={() => {
-            if (isFormOpen && !editingExtraId) {
-              resetForm();
-            } else {
-              setFormData(createEmptyForm());
+        <div className={styles.headerActions}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={() => {
+              setIsLibraryOpen((current) => !current);
+              setIsFormOpen(false);
               setEditingExtraId('');
               setError('');
-              setIsFormOpen(true);
-            }
-          }}
-        >
-          <FiPlus aria-hidden="true" />
-          Nuevo extra
-        </button>
+            }}
+          >
+            <FiBookOpen aria-hidden="true" />
+            Desde recurrentes
+          </button>
+
+          <button
+            type="button"
+            className={styles.primaryButton}
+            onClick={() => {
+              if (isFormOpen && !editingExtraId) {
+                resetForm();
+              } else {
+                setFormData(createEmptyForm());
+                setEditingExtraId('');
+                setError('');
+                setIsLibraryOpen(false);
+                setIsFormOpen(true);
+              }
+            }}
+          >
+            <FiPlus aria-hidden="true" />
+            Nuevo extra
+          </button>
+        </div>
       </div>
 
       {error ? <p className={styles.error}>{error}</p> : null}
+
+      {isLibraryOpen ? (
+        <div className={styles.formCard}>
+          <div className={styles.subsectionHeader}>
+            <div>
+              <strong>Extras recurrentes</strong>
+              <span>Importar crea una snapshot independiente dentro del viaje.</span>
+            </div>
+            <Link to="/biblioteca-recurrentes" className={styles.textLink}>Administrar biblioteca</Link>
+          </div>
+
+          {recurringLoading ? <div className={styles.compactEmptyState}>Cargando recurrentes...</div> : null}
+
+          {!recurringLoading && recurringExtras.length === 0 ? (
+            <div className={styles.compactEmptyState}>
+              Todavía no tenés extras recurrentes. Podés crear uno en la biblioteca.
+            </div>
+          ) : null}
+
+          {!recurringLoading && recurringExtras.length > 0 ? (
+            <div className={styles.libraryList}>
+              {recurringExtras.map((item) => {
+                const alreadyImported = foodExtras.some(
+                  (extra) => extra.sourceRecurringItemId === item.id,
+                );
+
+                return (
+                  <div key={item.id} className={styles.libraryRow}>
+                    <div>
+                      <strong>{item.name}</strong>
+                      <span>
+                        {item.mode === EXTRA_MODES.direct
+                          ? `${formatFoodQuantity(item.quantity)} ${item.unit}`
+                          : `${(item.ingredients || []).length} ingredientes`}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={() => handleImport(item)}
+                      disabled={alreadyImported || importingItemId === item.id}
+                    >
+                      {alreadyImported
+                        ? 'Ya agregado'
+                        : importingItemId === item.id
+                          ? 'Importando...'
+                          : 'Importar'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {isFormOpen ? (
         <form className={styles.formCard} onSubmit={handleSubmit}>
@@ -249,10 +402,26 @@ function FoodExtrasSection({
                     ) : (
                       <span className={styles.metaBadge}>{(extra.ingredients || []).length} ingredientes</span>
                     )}
+                    {extra.sourceRecurringItemId ? <span className={styles.accentBadge}>Recurrente</span> : null}
                   </div>
                 </div>
 
                 <div className={styles.itemActions}>
+                  <button
+                    type="button"
+                    className={styles.compactTextButton}
+                    onClick={() => extra.sourceRecurringItemId
+                      ? handleUpdateLibraryItem(extra)
+                      : handleSaveToLibrary(extra)}
+                    disabled={savingExtraId === extra.id}
+                  >
+                    <FiBookOpen aria-hidden="true" />
+                    {savingExtraId === extra.id
+                      ? 'Guardando...'
+                      : extra.sourceRecurringItemId
+                        ? 'Actualizar recurrente'
+                        : 'Guardar como recurrente'}
+                  </button>
                   <button type="button" className={styles.iconButton} onClick={() => handleEdit(extra)} aria-label={`Editar ${extra.name}`}>
                     <FiEdit2 aria-hidden="true" />
                   </button>

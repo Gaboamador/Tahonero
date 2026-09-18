@@ -1,0 +1,165 @@
+@use "@/styles/refs" as *;
+
+.page {
+  display: grid;
+  gap: $space-lg;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: $space-xs;
+  padding: $space-xs $space-sm;
+
+  color: $color-text-secondary;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-bold;
+
+  border-radius: $radius-pill;
+
+  &:hover {
+    color: $color-text-primary;
+    background: $color-bg-elevated-2;
+  }
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+  padding: $space-lg;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-sm;
+
+  h1 {
+    margin-bottom: $space-xs;
+
+    color: $color-text-primary;
+    font-family: $font-family-display;
+    font-size: $font-size-heading-lg;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+  }
+
+  p {
+    max-width: 720px;
+    color: $color-text-secondary;
+  }
+}
+
+.eyebrow {
+  margin-bottom: $space-xs;
+
+  color: $color-accent-primary !important;
+  font-size: $font-size-label-sm;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.loading {
+  padding: $space-md;
+  color: $color-text-secondary;
+  text-align: center;
+}
+
+.presetPicker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: $space-xs;
+}
+
+.presetOption {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: $space-xs;
+  align-items: center;
+  padding: $space-sm;
+
+  color: $color-text-secondary;
+
+  background: $color-bg-elevated;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+
+  input {
+    width: 1rem;
+    height: 1rem;
+    accent-color: $color-accent-primary;
+  }
+
+  > span:last-child {
+    display: grid;
+    gap: $space-2xs;
+    min-width: 0;
+  }
+
+  strong {
+    overflow: hidden;
+    color: $color-text-primary;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    color: $color-text-muted;
+    font-size: $font-size-body-xs;
+  }
+}
+
+.presetOptionIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+
+  color: $color-accent-secondary;
+
+  background: rgba($color-accent-secondary, 0.1);
+  border-radius: $radius-pill;
+}
+
+.presetContents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-xs;
+
+  span {
+    padding: $space-2xs $space-xs;
+
+    color: $color-text-secondary;
+    font-size: $font-size-body-xs;
+
+    background: rgba($color-text-muted, 0.1);
+    border-radius: $radius-pill;
+  }
+}
+
+@media (max-width: 719px) {
+  .page {
+    gap: $space-md;
+  }
+
+  .hero {
+    padding: $space-md;
+
+    h1 {
+      font-size: $font-size-heading-md;
+    }
+  }
+
+  .presetPicker {
+    grid-template-columns: 1fr;
+  }
+
+  .presetOption {
+    padding: $space-xs;
+  }
+}
