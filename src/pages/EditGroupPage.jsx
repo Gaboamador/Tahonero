@@ -161,7 +161,7 @@ function EditGroupPage() {
           <input
             type="text"
             name="name"
-            placeholder="Ej: Bariloche 2027"
+            placeholder="Ej: Destino 2027"
             value={formData.name}
             onChange={handleChange}
             required

@@ -28,9 +28,13 @@
 
     color: $color-text-primary;
     font-family: $font-family-display;
-    font-size: $font-size-heading-lg;
+    font-size: $font-size-heading-md;
     line-height: 1.1;
     letter-spacing: -0.04em;
+
+    @media (min-width: 720px) {
+      font-size: $font-size-heading-lg;
+    }
   }
 
   p {

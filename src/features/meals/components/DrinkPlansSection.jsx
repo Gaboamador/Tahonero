@@ -180,7 +180,7 @@ function DrinkPlansSection({
               <input
                 type="text"
                 value={formData.name}
-                placeholder="Ej: Bebida Cola"
+                placeholder="Ej: Coca Cola"
                 onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
                 required
               />
