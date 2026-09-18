@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { FiBookOpen, FiEdit2, FiPlus, FiTrash2 } from 'react-icons/fi';
 import IngredientEditor from '@/features/meals/components/IngredientEditor';
 import PurchasePlaceInput from '@/features/meals/components/PurchasePlaceInput';
@@ -37,6 +36,7 @@ function FoodExtrasSection({
   recurringExtras = [],
   recurringLoading = false,
   purchasePlaceSuggestions = [],
+  onManageLibrary,
 }) {
   const [formData, setFormData] = useState(createEmptyForm);
   const [editingExtraId, setEditingExtraId] = useState('');
@@ -242,7 +242,9 @@ function FoodExtrasSection({
               <strong>Extras recurrentes</strong>
               <span>Importar crea una snapshot independiente dentro del viaje.</span>
             </div>
-            <Link to="/biblioteca-recurrentes" className={styles.textLink}>Administrar biblioteca</Link>
+            <button type="button" className={styles.textLink} onClick={onManageLibrary}>
+              Administrar biblioteca
+            </button>
           </div>
 
           {recurringLoading ? <div className={styles.compactEmptyState}>Cargando recurrentes...</div> : null}

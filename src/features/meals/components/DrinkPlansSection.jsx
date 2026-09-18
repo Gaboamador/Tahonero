@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { FiBookOpen, FiEdit2, FiPlus, FiTrash2 } from 'react-icons/fi';
 import PurchasePlaceInput from '@/features/meals/components/PurchasePlaceInput';
 import {
@@ -44,6 +43,7 @@ function DrinkPlansSection({
   recurringDrinks = [],
   recurringLoading = false,
   purchasePlaceSuggestions = [],
+  onManageLibrary,
 }) {
   const [formData, setFormData] = useState(() => createEmptyForm(members));
   const [editingDrinkId, setEditingDrinkId] = useState('');
@@ -291,7 +291,9 @@ function DrinkPlansSection({
               <strong>Bebidas recurrentes</strong>
               <span>Las bebidas por persona se importan con todos los participantes actuales seleccionados.</span>
             </div>
-            <Link to="/biblioteca-recurrentes" className={styles.textLink}>Administrar biblioteca</Link>
+            <button type="button" className={styles.textLink} onClick={onManageLibrary}>
+              Administrar biblioteca
+            </button>
           </div>
 
           {recurringLoading ? <div className={styles.compactEmptyState}>Cargando recurrentes...</div> : null}

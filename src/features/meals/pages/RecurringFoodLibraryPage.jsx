@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   FiArrowLeft,
   FiCoffee,
@@ -68,6 +68,7 @@ function createEmptyPresetForm() {
 
 function RecurringFoodLibraryPage() {
   const { currentUser } = useAuth();
+  const location = useLocation();
   const {
     items,
     extras,
@@ -85,6 +86,10 @@ function RecurringFoodLibraryPage() {
   const [openForm, setOpenForm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const returnTo = location.state?.returnTo || '/';
+  const returnScrollY = location.state?.returnScrollY;
+  const returnLabel = location.state?.returnLabel;
 
   const purchasePlaceSuggestions = useMemo(
     () => collectPurchasePlaces({ recurringItems: items }),
@@ -291,9 +296,13 @@ function RecurringFoodLibraryPage() {
 
   return (
     <section className={styles.page}>
-      <Link to="/" className={styles.backLink}>
+      <Link
+        to={returnTo}
+        state={Number.isFinite(returnScrollY) ? { restoreScrollY: returnScrollY } : undefined}
+        className={styles.backLink}
+      >
         <FiArrowLeft aria-hidden="true" />
-        Volver al inicio
+        {returnLabel ? `Volver a ${returnLabel}` : 'Volver al inicio'}
       </Link>
 
       <div className={styles.hero}>

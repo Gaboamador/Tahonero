@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { FiRepeat } from 'react-icons/fi';
 import { DRINK_CALCULATION_MODES, DRINK_COVERAGE_MODES } from '@/features/meals/constants/mealConstants';
 import {
@@ -19,6 +18,7 @@ function RecurringPresetsSection({
   currentUserUid,
   sharedUserIds = [],
   libraryLoading = false,
+  onManageLibrary,
 }) {
   const [importingPresetId, setImportingPresetId] = useState('');
   const [error, setError] = useState('');
@@ -93,10 +93,10 @@ function RecurringPresetsSection({
             Agregá de una sola vez el conjunto de extras y bebidas que suelen repetirse en tus viajes.
           </p>
         </div>
-        <Link to="/biblioteca-recurrentes" className={styles.secondaryButton}>
+        <button type="button" className={styles.secondaryButton} onClick={onManageLibrary}>
           <FiRepeat aria-hidden="true" />
           Administrar recurrentes
-        </Link>
+        </button>
       </div>
 
       {error ? <p className={styles.error}>{error}</p> : null}

@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import { FiCoffee, FiPackage, FiShoppingCart, FiUsers } from 'react-icons/fi';
 import DrinkPlansSection from '@/features/meals/components/DrinkPlansSection';
 import FoodExtrasSection from '@/features/meals/components/FoodExtrasSection';
@@ -21,6 +21,8 @@ import styles from './MealsPage.module.scss';
 
 function MealsPage() {
   const { group } = useOutletContext();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { meals, mealPlan, foodExtras, drinkPlans, isLoading, error } = useMealModuleData(group.id);
   const {
@@ -63,6 +65,53 @@ function MealsPage() {
   );
 
   const plannedSlots = slots.filter((slot) => mealPlan.some((plan) => plan.id === slot.id)).length;
+
+  const handleManageRecurringLibrary = useCallback(() => {
+    navigate('/biblioteca-recurrentes', {
+      state: {
+        returnTo: `${location.pathname}${location.search}${location.hash}`,
+        returnScrollY: window.scrollY,
+        returnLabel: 'Comidas',
+      },
+    });
+  }, [location.hash, location.pathname, location.search, navigate]);
+
+  useEffect(() => {
+    const restoreScrollY = location.state?.restoreScrollY;
+
+    if (
+      !Number.isFinite(restoreScrollY)
+      || isLoading
+      || libraryLoading
+      || recurringLoading
+    ) {
+      return undefined;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      window.scrollTo({
+        top: restoreScrollY,
+        left: 0,
+        behavior: 'auto',
+      });
+
+      navigate(`${location.pathname}${location.search}${location.hash}`, {
+        replace: true,
+        state: null,
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [
+    isLoading,
+    libraryLoading,
+    location.hash,
+    location.pathname,
+    location.search,
+    location.state?.restoreScrollY,
+    navigate,
+    recurringLoading,
+  ]);
 
   useEffect(() => {
     if (libraryLoading || !currentUser?.uid || meals.length === 0) {
@@ -192,6 +241,7 @@ function MealsPage() {
         currentUserUid={currentUser.uid}
         sharedUserIds={sharedUserIds}
         libraryLoading={recurringLoading}
+        onManageLibrary={handleManageRecurringLibrary}
       />
 
       <FoodExtrasSection
@@ -202,6 +252,7 @@ function MealsPage() {
         recurringExtras={recurringExtras}
         recurringLoading={recurringLoading}
         purchasePlaceSuggestions={purchasePlaceSuggestions}
+        onManageLibrary={handleManageRecurringLibrary}
       />
 
       <DrinkPlansSection
@@ -214,6 +265,7 @@ function MealsPage() {
         recurringDrinks={recurringDrinks}
         recurringLoading={recurringLoading}
         purchasePlaceSuggestions={purchasePlaceSuggestions}
+        onManageLibrary={handleManageRecurringLibrary}
       />
     </div>
   );
